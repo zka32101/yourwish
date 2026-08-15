@@ -10,6 +10,7 @@ Petit Works Apps の各アプリをまとめて管理するモノレポです。
 apps/
   geography_puzzle_king/   # 日本領土ディフェンス（都道府県タワーディフェンス）
   _template_sns_game/      # SNS配信（TikTok Liveなど）用ゲーム環境のテンプレート
+  viewer_vote_survival/    # 視聴者投票サバイバル（TikTok Live / 視聴者参加型）
   (今後、SNS配信用ゲームを含め、他アプリ/環境を追加していく想定)
 ```
 
@@ -18,7 +19,9 @@ apps/
 TikTok Live など、SNS配信で使うゲームは `apps/` 配下に環境を1つずつ
 追加していく方針です。新規追加の手順・規約は
 [`docs/sns-live-game-environments.md`](docs/sns-live-game-environments.md)
-を参照してください。
+を参照してください。1本目の環境として
+[`apps/viewer_vote_survival/`](apps/viewer_vote_survival/README.md)
+（視聴者コメント投票で進行が決まるサバイバルゲーム）を追加済みです。
 
 ## CI
 
