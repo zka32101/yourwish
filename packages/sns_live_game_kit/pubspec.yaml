@@ -1,0 +1,23 @@
+name: sns_live_game_kit
+description: >
+  SNS配信（TikTok Liveなど）向け視聴者参加型ゲームを何個も作るための共通部品集。
+  ライブコメント投票サービスの抽象化、HP表示・投票バー・コメントティッカーなどの
+  共通UIウィジェットをまとめている。apps/<ゲーム名>/ から path 依存で利用する。
+publish_to: 'none'
+
+version: 0.1.0
+
+environment:
+  sdk: ^3.12.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
