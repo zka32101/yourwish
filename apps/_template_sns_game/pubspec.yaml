@@ -1,0 +1,20 @@
+name: template_sns_game
+description: "SNS配信（TikTok Liveなど）向けゲーム環境のテンプレート。コピーして新しい環境を作る際のひな形。"
+publish_to: 'none'
+
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.12.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
