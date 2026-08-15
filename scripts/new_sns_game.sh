@@ -57,6 +57,12 @@ sed -i.bak \
   "$TARGET_DIR/pubspec.yaml"
 rm -f "$TARGET_DIR/pubspec.yaml.bak"
 
+echo "==> package:template_sns_game への参照を書き換えています"
+grep -rl "package:template_sns_game/" "$TARGET_DIR" 2>/dev/null | while read -r f; do
+  sed -i.bak "s/package:template_sns_game\//package:$GAME_NAME\//g" "$f"
+  rm -f "$f.bak"
+done
+
 echo "==> README.md を新しいゲーム用に差し替えています"
 cat > "$TARGET_DIR/README.md" <<EOF
 # $GAME_NAME
