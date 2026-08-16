@@ -2,10 +2,9 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:sns_live_game_kit/sns_live_game_kit.dart';
 
 import '../data/scenarios.dart';
-import '../models/scenario.dart';
-import '../services/live_comment_service.dart';
 
 enum _GamePhase { voting, result, gameOver, cleared }
 
@@ -17,6 +16,10 @@ const int _votingSeconds = 8;
 /// 縦向き配信（TikTok Liveなど）を前提にしたレイアウト。
 /// 一定時間ごとに選択肢を提示し、視聴者コメントの投票を集計、
 /// 多数決で選ばれた選択肢の結果をランダム判定でHPに反映していく。
+///
+/// 投票受信・HP表示・投票バー・コメントティッカーは
+/// `package:sns_live_game_kit` の共通部品を利用しており、
+/// このファイルにはこのゲーム固有の進行ロジックだけを書いている。
 class LiveGameScreen extends StatefulWidget {
   const LiveGameScreen({super.key});
 
@@ -39,7 +42,7 @@ class _LiveGameScreenState extends State<LiveGameScreen> {
   String? _resultText;
   final Map<String, int> _voteCounts = {};
 
-  Scenario get _currentScenario => survivalScenarios[_round];
+  VoteScenario get _currentScenario => survivalScenarios[_round];
 
   @override
   void initState() {
@@ -104,7 +107,7 @@ class _LiveGameScreenState extends State<LiveGameScreen> {
         : topKeywords[_random.nextInt(topKeywords.length)];
     final winningChoice = choices.firstWhere((c) => c.voteKeyword == winningKeyword);
 
-    final isSafe = _random.nextDouble() < winningChoice.safetyRate;
+    final isSafe = _random.nextDouble() < winningChoice.successRate;
 
     setState(() {
       _phase = _GamePhase.result;
@@ -177,7 +180,7 @@ class _LiveGameScreenState extends State<LiveGameScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  _CommentTicker(recentComments: _recentComments),
+                  CommentTicker(recentComments: _recentComments),
                 ],
               ),
           },
@@ -207,14 +210,7 @@ class _HeaderBar extends StatelessWidget {
           children: [
             Text('${round + 1} / $total', style: const TextStyle(color: Colors.white54)),
             const SizedBox(width: 12),
-            ...List.generate(
-              _startingHp,
-              (i) => Icon(
-                i < hp ? Icons.favorite : Icons.favorite_border,
-                color: Colors.redAccent,
-                size: 20,
-              ),
-            ),
+            LivesRow(current: hp, max: _startingHp),
           ],
         ),
       ],
@@ -231,7 +227,7 @@ class _ScenarioCard extends StatelessWidget {
     required this.secondsLeft,
   });
 
-  final Scenario scenario;
+  final VoteScenario scenario;
   final Map<String, int> voteCounts;
   final _GamePhase phase;
   final String? resultText;
@@ -239,7 +235,6 @@ class _ScenarioCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final totalVotes = voteCounts.values.fold<int>(0, (a, b) => a + b);
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -261,35 +256,7 @@ class _ScenarioCard extends StatelessWidget {
             ),
             const SizedBox(height: 12),
           ],
-          ...scenario.choices.map((choice) {
-            final votes = voteCounts[choice.voteKeyword] ?? 0;
-            final ratio = totalVotes == 0 ? 0.0 : votes / totalVotes;
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(choice.label, style: const TextStyle(color: Colors.white)),
-                      Text('$votes票', style: const TextStyle(color: Colors.white54)),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: LinearProgressIndicator(
-                      value: ratio,
-                      minHeight: 10,
-                      backgroundColor: Colors.white12,
-                      valueColor: const AlwaysStoppedAnimation(Colors.deepPurpleAccent),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }),
+          VoteBarList(choices: scenario.choices, voteCounts: voteCounts),
           if (phase == _GamePhase.result && resultText != null) ...[
             const SizedBox(height: 8),
             Text(
@@ -298,36 +265,6 @@ class _ScenarioCard extends StatelessWidget {
             ),
           ],
         ],
-      ),
-    );
-  }
-}
-
-class _CommentTicker extends StatelessWidget {
-  const _CommentTicker({required this.recentComments});
-
-  final List<String> recentComments;
-
-  @override
-  Widget build(BuildContext context) {
-    if (recentComments.isEmpty) return const SizedBox(height: 32);
-    return SizedBox(
-      height: 32,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        children: recentComments
-            .map(
-              (c) => Container(
-                margin: const EdgeInsets.only(right: 8),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.white10,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Text('視聴者: $c', style: const TextStyle(color: Colors.white70, fontSize: 12)),
-              ),
-            )
-            .toList(),
       ),
     );
   }

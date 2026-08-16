@@ -1,0 +1,36 @@
+name: Flutter App CI (reusable)
+
+# apps/<app>/ や packages/<package>/ ごとのCIファイルから呼び出す共通ワークフロー。
+# 各アプリ側は `uses: ./.github/workflows/flutter-app-ci.yml` で
+# app-path を指定するだけで analyze + test が実行できる。
+on:
+  workflow_call:
+    inputs:
+      app-path:
+        description: "flutter pub get / analyze / test を実行するディレクトリ（例: apps/viewer_vote_survival）"
+        required: true
+        type: string
+
+jobs:
+  analyze-and-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ inputs.app-path }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.x'
+          channel: stable
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+
+      - name: Test
+        run: flutter test

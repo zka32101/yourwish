@@ -1,17 +1,24 @@
 # _template_sns_game（テンプレート）
 
 SNS配信（TikTok Live など）向けゲーム環境を新規に追加するためのひな形です。
-**このディレクトリ自体はビルド対象ではありません。** 新しいゲームを作る際は
-このディレクトリを丸ごとコピーして `apps/<新しいゲーム名>/` にリネームし、
-中身を実装してください。
+**このディレクトリ自体はビルド対象ではありません。**
 
-追加手順は [`docs/sns-live-game-environments.md`](../../docs/sns-live-game-environments.md)
-を参照してください。
+新しいゲームを作る際は、リポジトリルートで以下を実行するのが最も簡単です。
+
+```bash
+scripts/new_sns_game.sh <新しいゲーム名> "説明文"
+```
+
+（手動でコピーする場合の手順は
+[`docs/sns-live-game-environments.md`](../../docs/sns-live-game-environments.md)
+を参照してください。）
 
 ## このテンプレートに含まれるもの
 
-- `pubspec.yaml` — Flutterプロジェクトの最小構成（依存関係は必要に応じて追加）
-- `lib/main.dart` — 配信画面を意識した最小限のプレースホルダー実装
+- `pubspec.yaml` — Flutterプロジェクトの最小構成
+  （`packages/sns_live_game_kit` への依存が最初から入っている）
+- `lib/main.dart` — `sns_live_game_kit` の `LivesRow` / `CommentTicker` を
+  使った最小限のプレースホルダー実装
 
 ## 想定している配信ゲームの型
 
