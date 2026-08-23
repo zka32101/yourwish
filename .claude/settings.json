@@ -1,0 +1,49 @@
+{
+  "name": "Petit Works Apps - Claude Code Docker Setup",
+  "description": "SNS配信ゲーム・パズルゲーム開発用モノレポ（Docker永続化・リソース最適化対応）",
+
+  "hooks": {
+    "on_session_start": {
+      "description": "セッション開始時に Docker セットアップを自動実行",
+      "script": ".claude/hooks/on-session-start.sh",
+      "runImmediately": true
+    }
+  },
+
+  "docs": {
+    "primary": "CLAUDE.md",
+    "additional": [
+      "README.md",
+      "docs/sns-live-game-environments.md"
+    ]
+  },
+
+  "recommendations": {
+    "docker": {
+      "enabled": true,
+      "composePath": "docker-compose.yml",
+      "autoSetup": true,
+      "message": "このプロジェクトは Docker セットアップ対応です。./scripts/setup-claude-code.sh で自動初期化できます。"
+    },
+    "skills": [
+      {
+        "name": "docker-claude-setup",
+        "description": "Docker リソース節約セットアップ",
+        "location": ".claude/skills/docker-claude-setup/SKILL.md"
+      }
+    ]
+  },
+
+  "environment": {
+    "NODE_VERSION": "20",
+    "SUPPORTS_DOCKER": true,
+    "AUTO_SETUP": true
+  },
+
+  "paths": {
+    "scripts": "scripts/",
+    "apps": "apps/",
+    "packages": "packages/",
+    "docs": "docs/"
+  }
+}
