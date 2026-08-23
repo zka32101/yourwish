@@ -1,0 +1,32 @@
+version: '3.9'
+
+services:
+  claude:
+    image: node:20-alpine
+    container_name: yourwish-claude-code
+    working_dir: /workspace
+    volumes:
+      # Claude Code セッション・認証情報の永続化
+      - ./claude-home:/home/node/.claude
+      # プロジェクトソースコード
+      - .:/workspace
+      # npm キャッシュの永続化（インストール高速化）
+      - npm-cache:/home/node/.npm
+    environment:
+      # npm グローバルインストール用
+      - NPM_CONFIG_PREFIX=/home/node/.npm-global
+      - PATH=/home/node/.npm-global/bin:$PATH
+    ports:
+      # Claude Code CLI、各ゲーム開発サーバー用
+      - "3000-3100:3000-3100"
+      # デバッガー、その他の開発ツール
+      - "5900-5910:5900-5910"
+    stdin_open: true
+    tty: true
+    command: /bin/sh
+    # ホストのユーザー ID を使用してファイル権限問題を回避
+    user: "node"
+
+volumes:
+  npm-cache:
+    driver: local

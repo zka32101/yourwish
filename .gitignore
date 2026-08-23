@@ -6,3 +6,9 @@
 build/
 .flutter-plugins
 .flutter-plugins-dependencies
+
+# Docker & Claude Code 永続化
+claude-home/
+npm-cache/
+.env.local
+.DS_Store
