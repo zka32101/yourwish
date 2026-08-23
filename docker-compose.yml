@@ -12,15 +12,35 @@ services:
       - .:/workspace
       # npm キャッシュの永続化（インストール高速化）
       - npm-cache:/home/node/.npm
+      # npm グローバルパッケージ（node_modules）の永続化
+      - npm-global:/home/node/.npm-global
     environment:
       # npm グローバルインストール用
       - NPM_CONFIG_PREFIX=/home/node/.npm-global
       - PATH=/home/node/.npm-global/bin:$PATH
+      # Node.js メモリ効率化（自動GC）
+      - NODE_OPTIONS=--max-old-space-size=${NODE_MAX_MEMORY:-512} --max-http-header-size=16384
+      # npm キャッシュ設定
+      - npm_config_cache=/home/node/.npm
+      - npm_config_prefer_offline=true
     ports:
       # Claude Code CLI、各ゲーム開発サーバー用
       - "3000-3100:3000-3100"
       # デバッガー、その他の開発ツール
       - "5900-5910:5900-5910"
+    # メモリベースのテンポラリストレージ（高速）
+    tmpfs:
+      - /tmp
+      - /home/node/.cache
+    # リソース制限（ホストマシンを保護）
+    deploy:
+      resources:
+        limits:
+          cpus: ${CLAUDE_CPU_LIMIT:-"2.0"}
+          memory: ${CLAUDE_MEMORY_LIMIT:-1G}
+        reservations:
+          cpus: ${CLAUDE_CPU_RESERVE:-"1.0"}
+          memory: ${CLAUDE_MEMORY_RESERVE:-512M}
     stdin_open: true
     tty: true
     command: /bin/sh
@@ -28,5 +48,9 @@ services:
     user: "node"
 
 volumes:
+  # npm パッケージキャッシュ（ディスクベース・永続化）
   npm-cache:
+    driver: local
+  # npm グローバルパッケージ（ディスクベース・永続化）
+  npm-global:
     driver: local

@@ -91,3 +91,93 @@ scripts/new_sns_game.sh <game_name> "説明文"
 - `npm-cache/`: npm パッケージキャッシュ
 
 これにより、コンテナ再起動時も認証を再実行せず、セッション履歴を共有できます。
+
+## Claude Code リソース節約
+
+### セットアップ（自動最適化）
+
+```bash
+# 自動セットアップ・最適化
+./scripts/setup-claude-code.sh
+
+# キャッシュをクリアして再初期化
+./scripts/setup-claude-code.sh clean
+```
+
+このスクリプトが以下を自動実行します：
+- `.env` ファイルの生成
+- Docker ボリュームの準備
+- npm キャッシュの最適化
+- Claude Code CLI のインストール
+
+### リソース制限の設定
+
+`.env` ファイルでホストマシンのリソース環境に合わせて調整可能：
+
+```bash
+# 低スペック環境（2GB RAM以下）
+NODE_MAX_MEMORY=256
+CLAUDE_MEMORY_LIMIT=512M
+
+# 中程度環境（4GB RAM）
+NODE_MAX_MEMORY=512
+CLAUDE_MEMORY_LIMIT=1G
+
+# 高スペック環境（8GB以上）
+NODE_MAX_MEMORY=1024
+CLAUDE_MEMORY_LIMIT=2G
+```
+
+### 最適化機能
+
+1. **メモリ自動管理**
+   - Node.js 自動ガベージコレクション
+   - HTTP ヘッダーサイズ制限（効率化）
+
+2. **npm キャッシュ優先**
+   - オフラインモード有効化
+   - パッケージ監査スキップ（高速化）
+
+3. **CPU・メモリ制限**
+   - ホストマシンを保護
+   - 他プロセスへの干渉最小化
+
+4. **ボリュームマウント最適化**
+   - tmpfs 使用（高速なメモリベースキャッシュ）
+   - グローバルパッケージの永続化
+
+### ベストプラクティス
+
+```bash
+# コンテナ起動（最適化設定を適用）
+docker-compose up -d claude
+
+# コンテナ内で作業
+docker-compose exec claude bash
+
+# 定期的なキャッシュクリア（月1回程度）
+./scripts/setup-claude-code.sh clean
+docker-compose up -d claude
+```
+
+### トラブルシューティング
+
+**メモリ不足エラー**
+```bash
+# .env で NODE_MAX_MEMORY を減らす
+NODE_MAX_MEMORY=256
+docker-compose restart claude
+```
+
+**npm インストール遅延**
+```bash
+# npm キャッシュをリセット
+./scripts/setup-claude-code.sh clean
+docker-compose run --rm claude npm cache clean --force
+```
+
+**リソース使用状況確認**
+```bash
+# Docker リソース監視
+docker stats yourwish-claude-code
+```
