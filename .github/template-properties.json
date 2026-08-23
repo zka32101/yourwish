@@ -1,0 +1,18 @@
+{
+  "name": "Docker Claude Code テンプレート",
+  "description": "Claude Code Docker リソース節約セットアップが組み込まれたプロジェクトテンプレート",
+  "public": true,
+  "readme": {
+    "template": false
+  },
+  "topics": [
+    "claude-code",
+    "docker",
+    "development-environment",
+    "template"
+  ],
+  "owner": {
+    "login": "zka32101",
+    "type": "User"
+  }
+}
