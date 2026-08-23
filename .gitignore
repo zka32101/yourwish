@@ -10,5 +10,6 @@ build/
 # Docker & Claude Code 永続化
 claude-home/
 npm-cache/
+.env
 .env.local
 .DS_Store
