@@ -1,8 +1,8 @@
-# Claude.md - Petit Works Apps Monorepo
+# Claude.md - yourwish Monorepo
 
 ## プロジェクト概要
 
-Petit Works Apps のモノレポ。SNS配信用ゲーム（TikTok Live など）やパズルゲームを複数管理します。
+yourwish のモノレポ。SNS配信用ゲーム（TikTok Live など）やパズルゲームを複数管理します。
 
 - **言語**: Dart (Flutter), TypeScript, Bash
 - **構成**: Monorepo (apps + packages + scripts)

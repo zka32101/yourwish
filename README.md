@@ -1,6 +1,6 @@
-# Petit Works Apps Monorepo
+# yourwish Monorepo
 
-Petit Works Apps の各アプリをまとめて管理するモノレポです。
+yourwish の各アプリをまとめて管理するモノレポです。
 トップ（リポジトリルート）が全体を束ね、`apps/` 配下に各アプリ・
 各ゲーム環境を1ディレクトリ = 1環境として何個でも追加していきます。
 

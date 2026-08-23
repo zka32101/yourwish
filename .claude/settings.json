@@ -1,5 +1,5 @@
 {
-  "name": "Petit Works Apps - Claude Code Docker Setup",
+  "name": "yourwish - Claude Code Docker Setup",
   "description": "SNS配信ゲーム・パズルゲーム開発用モノレポ（Docker永続化・リソース最適化対応）",
 
   "hooks": {
