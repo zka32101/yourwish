@@ -268,8 +268,18 @@ HTML artifact で統合ダッシュボード配置：
 - 複数件ある場合はまとめて一度に確認してよい
 - 緊急度の低い確認は次回の監視レポートに含めてよいが、破壊的操作や重大なセキュリティ問題は即時報告する
 
+## 報告時のリンク併記
+
+PR・セッション・トリガーなどに言及する際は、番号/名前だけでなく実際のURLも併記する。
+
+- GitHub PR/Issue → `https://github.com/<owner>/<repo>/pull/<番号>` または `/issues/<番号>`
+- セッション → `https://claude.ai/code/session_XXXXX`（session_id から構築、または get_session の返り値を利用）
+- Artifact/ダッシュボード → 発行時に得られる URL
+
+例: 「PR #11 (zka32101/yourwish) → https://github.com/zka32101/yourwish/pull/11」
+
 ---
 
 **最終更新**: 2026-08-29
-**バージョン**: 1.3.0
+**バージョン**: 1.4.0
 **ステータス**: ✅ 本運用
