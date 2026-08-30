@@ -6,7 +6,7 @@
   },
   "checks": {
     "enabled": true,
-    "interval_minutes": 720,
+    "interval_minutes": 10080,
     "timeout_seconds": 30
   },
   "git": {
