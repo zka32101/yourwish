@@ -1,0 +1,28 @@
+{
+  "monitoring_agent": {
+    "name": "Monitoring Agent - yourwish",
+    "version": "1.0.0",
+    "description": "オーケストレーターの状態監視とヘルスチェック"
+  },
+  "checks": {
+    "enabled": true,
+    "interval_minutes": 60,
+    "timeout_seconds": 30
+  },
+  "git": {
+    "monitor_branch": "claude/monitoring-agent-verification-b0kqfh",
+    "track_remote": true
+  },
+  "docker": {
+    "monitor_services": true,
+    "services": [
+      "claude"
+    ]
+  },
+  "alerts": {
+    "git_divergence_threshold": 5,
+    "disk_space_threshold_percent": 80
+  },
+  "routines": [],
+  "last_check": "2026-08-30T00:42:56Z"
+}
