@@ -1,0 +1,22 @@
+{
+  "timestamp": "2026-08-30T00:09:48Z",
+  "status": "healthy",
+  "checks": {
+  "git": {
+    "branch": "claude/monitoring-agent-verification-b0kqfh",
+    "ahead": 0,
+    "behind": 0
+  },
+  "docker": {
+    "docker_running": false,
+    "services": {}
+  },
+  "project_structure": {
+    "total_checks": 7,
+    "passed": 7
+  },
+  "routines": {
+    "configured_routines": 0
+  }
+}
+}
