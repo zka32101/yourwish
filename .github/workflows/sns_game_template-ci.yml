@@ -1,0 +1,23 @@
+name: CI (sns_game_template)
+
+# apps/sns_game_template/ または依存している packages/game_kit/
+# の変更時のみ起動する。scripts/new_sns_game.sh はこのファイルをコピーして
+# 新しい環境のCIを生成する（コピー先では sns_game_template の部分が
+# 新しいゲーム名に置き換わる）。
+on:
+  push:
+    branches: [master, main]
+    paths:
+      - 'apps/sns_game_template/**'
+      - 'packages/game_kit/**'
+  pull_request:
+    paths:
+      - 'apps/sns_game_template/**'
+      - 'packages/game_kit/**'
+  workflow_dispatch:
+
+jobs:
+  ci:
+    uses: ./.github/workflows/flutter-app-ci.yml
+    with:
+      app-path: apps/sns_game_template

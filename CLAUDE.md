@@ -13,11 +13,11 @@ yourwish のモノレポ。SNS配信用ゲーム（TikTok Live など）やパ�
 ```
 yourwish/
 ├── apps/
-│   ├── geography_puzzle_king/        # 都道府県ディフェンスゲーム
-│   ├── viewer_vote_survival/         # 視聴者投票サバイバルゲーム
-│   └── _template_sns_game/           # SNS配信ゲームテンプレート
+│   ├── prefecture_defense/        # 都道府県ディフェンスゲーム
+│   ├── vote_survivor/         # 視聴者投票サバイバルゲーム
+│   └── sns_game_template/           # SNS配信ゲームテンプレート
 ├── packages/
-│   └── sns_live_game_kit/            # SNS配信用共通部品
+│   └── game_kit/            # SNS配信用共通部品
 ├── scripts/
 │   └── new_sns_game.sh               # 新規ゲーム環境生成スクリプト
 ├── docs/
@@ -73,7 +73,7 @@ scripts/new_sns_game.sh <game_name> "説明文"
 
 - **フロントエンド**: Flutter (Dart)
 - **バックエンド/配信**: TypeScript, Node.js
-- **ゲーム部品**: `packages/sns_live_game_kit`
+- **ゲーム部品**: `packages/game_kit`
 - **CI/CD**: GitHub Actions
 
 ## 開発ガイド

@@ -8,12 +8,12 @@ yourwish の各アプリをまとめて管理するモノレポです。
 
 ```
 apps/
-  geography_puzzle_king/   # 日本領土ディフェンス（都道府県タワーディフェンス）
-  _template_sns_game/      # SNS配信（TikTok Liveなど）用ゲーム環境のテンプレート
-  viewer_vote_survival/    # 視聴者投票サバイバル（TikTok Live / 視聴者参加型）
+  prefecture_defense/   # 日本領土ディフェンス（都道府県タワーディフェンス）
+  sns_game_template/      # SNS配信（TikTok Liveなど）用ゲーム環境のテンプレート
+  vote_survivor/    # 視聴者投票サバイバル（TikTok Live / 視聴者参加型）
   (今後、SNS配信用ゲームを含め、他アプリ/環境を追加していく想定)
 packages/
-  sns_live_game_kit/       # SNS配信用ゲーム共通の部品（投票UI・ライブコメント受信など）
+  game_kit/       # SNS配信用ゲーム共通の部品（投票UI・ライブコメント受信など）
 scripts/
   new_sns_game.sh          # 新しいSNS配信用ゲーム環境をコピー生成するスクリプト
 ```
@@ -27,12 +27,12 @@ TikTok Live など、SNS配信で使うゲームは `apps/` 配下に環境を1�
 scripts/new_sns_game.sh <新しいゲーム名> "説明文"
 ```
 
-投票UI・ライブコメント受信などの共通部分は `packages/sns_live_game_kit/`
+投票UI・ライブコメント受信などの共通部分は `packages/game_kit/`
 にまとまっており、各ゲームはそれに依存する形で実装します。
 詳細な手順・規約は
 [`docs/sns-live-game-environments.md`](docs/sns-live-game-environments.md)
 を参照してください。1本目の環境として
-[`apps/viewer_vote_survival/`](apps/viewer_vote_survival/README.md)
+[`apps/vote_survivor/`](apps/vote_survivor/README.md)
 （視聴者コメント投票で進行が決まるサバイバルゲーム）を追加済みです。
 
 ## CI
