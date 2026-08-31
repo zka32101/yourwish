@@ -1,0 +1,21 @@
+name: CI (vote_survivor)
+
+# モノレポ構成: apps/vote_survivor/ または
+# 依存している packages/game_kit/ の変更時のみ起動する。
+on:
+  push:
+    branches: [master, main]
+    paths:
+      - 'apps/vote_survivor/**'
+      - 'packages/game_kit/**'
+  pull_request:
+    paths:
+      - 'apps/vote_survivor/**'
+      - 'packages/game_kit/**'
+  workflow_dispatch:
+
+jobs:
+  ci:
+    uses: ./.github/workflows/flutter-app-ci.yml
+    with:
+      app-path: apps/vote_survivor

@@ -7,7 +7,7 @@ on:
   workflow_call:
     inputs:
       app-path:
-        description: "flutter pub get / analyze / test を実行するディレクトリ（例: apps/viewer_vote_survival）"
+        description: "flutter pub get / analyze / test を実行するディレクトリ（例: apps/vote_survivor）"
         required: true
         type: string
 

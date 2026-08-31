@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# apps/_template_sns_game/ をコピーして、新しいSNS配信用ゲーム環境を
+# apps/sns_game_template/ をコピーして、新しいSNS配信用ゲーム環境を
 # 作成するスキャフォールドスクリプト。
 #
 # 使い方:
@@ -9,7 +9,7 @@
 #   scripts/new_sns_game.sh quiz_battle_live "視聴者投票で答えを決めるクイズ配信ゲーム"
 #
 # 実行すると以下を自動でやる:
-#   - apps/_template_sns_game/ を apps/<ゲーム名>/ にコピー
+#   - apps/sns_game_template/ を apps/<ゲーム名>/ にコピー
 #   - pubspec.yaml の name / description を書き換え
 #   - README.md を新しいゲーム用の雛形に差し替え
 #   - .github/workflows/<ゲーム名>-ci.yml をテンプレートCIから生成
@@ -32,9 +32,9 @@ if ! [[ "$GAME_NAME" =~ ^[a-z][a-z0-9_]*$ ]]; then
 fi
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-TEMPLATE_DIR="$ROOT_DIR/apps/_template_sns_game"
+TEMPLATE_DIR="$ROOT_DIR/apps/sns_game_template"
 TARGET_DIR="$ROOT_DIR/apps/$GAME_NAME"
-TEMPLATE_CI="$ROOT_DIR/.github/workflows/_template_sns_game-ci.yml"
+TEMPLATE_CI="$ROOT_DIR/.github/workflows/sns_game_template-ci.yml"
 TARGET_CI="$ROOT_DIR/.github/workflows/${GAME_NAME}-ci.yml"
 
 if [ -d "$TARGET_DIR" ]; then
@@ -47,7 +47,7 @@ if [ -f "$TARGET_CI" ]; then
   exit 1
 fi
 
-echo "==> apps/_template_sns_game を apps/$GAME_NAME にコピーしています"
+echo "==> apps/sns_game_template を apps/$GAME_NAME にコピーしています"
 cp -r "$TEMPLATE_DIR" "$TARGET_DIR"
 
 echo "==> pubspec.yaml を書き換えています"
@@ -69,7 +69,7 @@ cat > "$TARGET_DIR/README.md" <<EOF
 
 $DESCRIPTION
 
-apps/_template_sns_game/ から scripts/new_sns_game.sh で生成した環境です。
+apps/sns_game_template/ から scripts/new_sns_game.sh で生成した環境です。
 
 ## 配信先SNS
 
@@ -98,7 +98,7 @@ EOF
 
 echo "==> CIワークフローを生成しています"
 sed \
-  -e "s/_template_sns_game/$GAME_NAME/g" \
+  -e "s/sns_game_template/$GAME_NAME/g" \
   "$TEMPLATE_CI" > "$TARGET_CI"
 
 cat <<EOF
@@ -107,7 +107,7 @@ cat <<EOF
 
 次にやること:
   1. apps/$GAME_NAME/lib/main.dart を実装する
-     （sns_live_game_kit の LiveCommentService / LivesRow / VoteBarList /
+     （game_kit の LiveCommentService / LivesRow / VoteBarList /
        CommentTicker を活用できます）
   2. apps/$GAME_NAME/README.md の配信先SNS・操作方法を埋める
   3. ルート README.md の環境一覧に apps/$GAME_NAME/ を追記する

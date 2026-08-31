@@ -8,9 +8,9 @@ TikTok Live / Instagram Live / YouTube Shorts など、SNS配信で使うこと�
 ## 基本方針
 
 - 配信用ゲームも通常のアプリと同様に、1ゲーム = 1環境 = `apps/` 直下の
-  1ディレクトリとして追加します（既存の `apps/geography_puzzle_king/` と同じ扱い）。
+  1ディレクトリとして追加します（既存の `apps/prefecture_defense/` と同じ扱い）。
 - 各環境は独立したFlutterプロジェクトですが、投票UI・ライブコメント受信などの
-  共通部分は `packages/sns_live_game_kit/` に切り出してあり、そこに依存する形で
+  共通部分は `packages/game_kit/` に切り出してあり、そこに依存する形で
   実装します（毎回ゼロから書かない）。
 - 「トップ（リポジトリのルート）」は環境を束ねる場所であり、ゲーム固有の
   ロジックは一切置きません。ルートに置くのは、規約・テンプレート・
@@ -24,11 +24,11 @@ yourwish/                        # トップ（リポジトリルート）
 ├── scripts/
 │   └── new_sns_game.sh          # 新規環境をコピー生成するスキャフォールドスクリプト
 ├── packages/
-│   └── sns_live_game_kit/       # 共通部品（投票サービス・HP表示・投票バー等）
+│   └── game_kit/       # 共通部品（投票サービス・HP表示・投票バー等）
 ├── apps/
-│   ├── geography_puzzle_king/   # 既存アプリ（配信対象ではない通常ゲーム）
-│   ├── _template_sns_game/      # 新規SNS配信用ゲームのひな形（スクリプトが使う）
-│   ├── <sns_game_1>/            # SNS配信用ゲーム環境 #1 (viewer_vote_survival)
+│   ├── prefecture_defense/   # 既存アプリ（配信対象ではない通常ゲーム）
+│   ├── sns_game_template/      # 新規SNS配信用ゲームのひな形（スクリプトが使う）
+│   ├── <sns_game_1>/            # SNS配信用ゲーム環境 #1 (vote_survivor)
 │   ├── <sns_game_2>/            # SNS配信用ゲーム環境 #2
 │   └── ...                      # 以降、何個でも追加していく
 └── .github/workflows/
@@ -53,7 +53,7 @@ scripts/new_sns_game.sh <新しいゲーム名> "説明文"
 その後、手動でやることは以下だけです。
 
 1. `apps/<新しいゲーム名>/lib/main.dart` を実装する。
-   `package:sns_live_game_kit` の部品を組み合わせるのが基本方針。
+   `package:game_kit` の部品を組み合わせるのが基本方針。
    - `LiveCommentService` / `MockLiveCommentService` — ライブコメント投票の受け口
    - `VoteScenario` / `VoteChoice` — 選択肢と成功確率のデータモデル
    - `LivesRow` — HP・残機のハート表示
@@ -71,27 +71,27 @@ scripts/new_sns_game.sh <新しいゲーム名> "説明文"
 
 ## 手動で作る場合の手順（スクリプトを使わない場合）
 
-1. `apps/_template_sns_game/` を `apps/<新しいゲーム名>/` としてコピーする
+1. `apps/sns_game_template/` を `apps/<新しいゲーム名>/` としてコピーする
    （ゲーム名はスネークケース）。
 2. `pubspec.yaml` の `name:` / `description:` を書き換える。
-3. `.github/workflows/_template_sns_game-ci.yml` を
+3. `.github/workflows/sns_game_template-ci.yml` を
    `.github/workflows/<新しいゲーム名>-ci.yml` としてコピーし、
-   ファイル内の `_template_sns_game` を新しいゲーム名に置換する。
+   ファイル内の `sns_game_template` を新しいゲーム名に置換する。
 4. 上記「スクリプト利用」手順の1〜3と同じ作業を行う。
 
-## 共通パッケージ (`packages/sns_live_game_kit`) に何を足すべきか
+## 共通パッケージ (`packages/game_kit`) に何を足すべきか
 
 - **複数のゲームで再利用できそうなUI・ロジック**はここに追加する
   （例: 新しい投票形式、演出用アニメーション、SNS共通の配信メタ情報表示）。
 - **特定のゲームにしか使わないロジック**は各 `apps/<ゲーム名>/` 側に置く。
 - 実際のTikTok Live APIなど、SNS側との本番連携クラスも複数ゲームで
-  使い回せるなら `sns_live_game_kit` 側に追加するのが望ましい
+  使い回せるなら `game_kit` 側に追加するのが望ましい
   （`LiveCommentService` を実装する形で）。
 
 ## 環境を横断する共通ルール
 
 - 各環境の依存関係・バージョンは環境ごとに独立して管理する
-  （`sns_live_game_kit` へのpath依存を除き、パッケージ管理は共有しない）。
+  （`game_kit` へのpath依存を除き、パッケージ管理は共有しない）。
 - macOSランナー（iOSビルド）を使うCIは、ルートREADME記載の方針どおり
   手動実行またはPR時限定とし、通常pushでは起動しない。
 - 環境数が増えても、ルート直下の構成（README / docs / scripts / packages /

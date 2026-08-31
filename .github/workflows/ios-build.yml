@@ -1,6 +1,6 @@
-name: iOS CI (geography_puzzle_king)
+name: iOS CI (prefecture_defense)
 
-# モノレポ構成: apps/geography_puzzle_king/ 配下の変更のみで起動する。
+# モノレポ構成: apps/prefecture_defense/ 配下の変更のみで起動する。
 # コスト対策: macOSランナーは10倍課金のため、自動push起動は厳禁。
 # 解析/テストのみ自動実行し、iOSビルドは手動実行(workflow_dispatch)限定にする。
 # 参考: feedback_ios_cicd_cost_optimization メモリ記録
@@ -8,15 +8,15 @@ on:
   push:
     branches: [master, main]
     paths:
-      - 'apps/geography_puzzle_king/**'
+      - 'apps/prefecture_defense/**'
   pull_request:
     paths:
-      - 'apps/geography_puzzle_king/**'
+      - 'apps/prefecture_defense/**'
   workflow_dispatch:
 
 defaults:
   run:
-    working-directory: apps/geography_puzzle_king
+    working-directory: apps/prefecture_defense
 
 jobs:
   analyze-and-test:
@@ -85,7 +85,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: geography-puzzle-king-ios-unsigned
-          path: apps/geography_puzzle_king/build/ios/iphoneos/Runner.app.zip
+          path: apps/prefecture_defense/build/ios/iphoneos/Runner.app.zip
           retention-days: 14
 
   build-ios-signed:
@@ -155,5 +155,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: geography-puzzle-king-ios-signed
-          path: apps/geography_puzzle_king/build/ios/ipa/*.ipa
+          path: apps/prefecture_defense/build/ios/ipa/*.ipa
           retention-days: 30
