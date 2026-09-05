@@ -14,8 +14,10 @@
     "primary": "CLAUDE.md",
     "additional": [
       "README.md",
-      "docs/sns-live-game-environments.md"
-    ]
+      "docs/sns-live-game-environments.md",
+      "docs/LOCAL_ENV_FREE_BUILD.md"
+    ],
+    "sessionStart": ".claude/SessionStart.md"
   },
 
   "recommendations": {
@@ -23,13 +25,26 @@
       "enabled": true,
       "composePath": "docker-compose.yml",
       "autoSetup": true,
-      "message": "このプロジェクトは Docker セットアップ対応です。./scripts/setup-claude-code.sh で自動初期化できます。"
+      "message": "このプロジェクトは完全な Docker 統合ビルド環境対応です。ローカル SDK 不要で ./scripts/build.sh でビルド完結します。"
     },
+    "tools": [
+      {
+        "name": "build-script",
+        "path": "scripts/build.sh",
+        "description": "統一ビルドスクリプト - Docker 内で完全にビルド完結",
+        "usage": "./scripts/build.sh flutter | android | web | packages"
+      }
+    ],
     "skills": [
       {
         "name": "docker-claude-setup",
         "description": "Docker リソース節約セットアップ",
         "location": ".claude/skills/docker-claude-setup/SKILL.md"
+      },
+      {
+        "name": "session-start-hook",
+        "description": "セッション開始フック（自動初期化）",
+        "location": ".claude/hooks/on-session-start.sh"
       }
     ]
   },
