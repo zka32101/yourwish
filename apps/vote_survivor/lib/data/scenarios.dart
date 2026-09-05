@@ -1,4 +1,4 @@
-import 'package:game_kit/sns_live_game_kit.dart';
+import 'package:game_kit/game_kit.dart';
 
 /// サンプルシナリオ集（漂流島サバイバル）。
 ///

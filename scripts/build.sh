@@ -6,6 +6,7 @@
 #   ./scripts/build.sh flutter      # Flutterアプリ全体
 #   ./scripts/build.sh flutter:vote_survivor  # 特定アプリ
 #   ./scripts/build.sh flutter:android        # Android APK生成
+#   ./scripts/build.sh flutter:aab            # Android App Bundle生成
 #   ./scripts/build.sh flutter:ios            # iOS IPA生成
 #   ./scripts/build.sh flutter:web            # Web版ビルド
 #   ./scripts/build.sh packages               # 全パッケージ
@@ -60,6 +61,7 @@ ${BLUE}=== Unified Build Script ===${NC}
 ターゲット:
   ${YELLOW}flutter${NC}                # Flutterアプリ全体 (analyze + test)
   ${YELLOW}flutter:android${NC}        # Android APK ビルド
+  ${YELLOW}flutter:aab${NC}            # Android App Bundle ビルド
   ${YELLOW}flutter:ios${NC}            # iOS ビルド (Xcode 必須)
   ${YELLOW}flutter:web${NC}            # Web ビルド
   ${YELLOW}flutter:<app-name>${NC}     # 特定アプリのビルド
@@ -81,8 +83,11 @@ ${BLUE}=== Unified Build Script ===${NC}
   # Flutterアプリ全体のテスト
   $0 flutter
 
-  # 特定アプリのAndroidビルド
+  # 特定アプリのAndroidビルド (APK)
   $0 flutter:android:vote_survivor BUILD_MODE=release
+
+  # 特定アプリのAndroidビルド (AAB)
+  $0 flutter:aab:vote_survivor BUILD_MODE=release
 
   # パッケージのみテスト
   $0 packages
@@ -216,6 +221,37 @@ run_flutter_android() {
     fi
 }
 
+# Android App Bundle ビルド
+run_flutter_aab() {
+    local app_name="${1:-vote_survivor}"
+    local app_path="$PROJECT_ROOT/apps/$app_name"
+
+    if [ ! -d "$app_path" ]; then
+        log_error "アプリが見つかりません: $app_path"
+        exit 1
+    fi
+
+    log_info "Android App Bundle ビルド: $app_name ($BUILD_MODE)"
+
+    if [ "$USE_DOCKER" = "true" ]; then
+        docker run --rm -v "$PROJECT_ROOT:/workspace" \
+            -w "/workspace/$app_path" \
+            cirrusci/flutter:$FLUTTER_VERSION \
+            sh -c "flutter pub get && flutter build appbundle --$BUILD_MODE"
+    else
+        cd "$app_path"
+        flutter pub get
+        flutter build appbundle --$BUILD_MODE
+        cd - > /dev/null
+    fi
+
+    log_success "Android App Bundle ビルド 完了: $app_name"
+    if [ "$USE_DOCKER" = "true" ]; then
+        echo ""
+        log_info "出力: $app_path/build/app/outputs/bundle/$BUILD_MODE/*.aab"
+    fi
+}
+
 # iOS ビルド
 run_flutter_ios() {
     local app_name="${1:-vote_survivor}"
@@ -331,6 +367,17 @@ main() {
             check_docker
             app_name="${TARGET#flutter:android:}"
             run_flutter_android "$app_name"
+            ;;
+        flutter:aab)
+            setup_cache
+            check_docker
+            run_flutter_aab "${2:-vote_survivor}"
+            ;;
+        flutter:aab:*)
+            setup_cache
+            check_docker
+            app_name="${TARGET#flutter:aab:}"
+            run_flutter_aab "$app_name"
             ;;
         flutter:ios)
             run_flutter_ios "${2:-vote_survivor}"

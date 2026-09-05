@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:viewer_vote_survival/main.dart';
+import 'package:vote_survivor/main.dart';
 
 void main() {
   testWidgets('起動するとタイトルと1問目のシナリオが表示される', (tester) async {
