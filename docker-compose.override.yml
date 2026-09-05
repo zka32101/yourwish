@@ -1,0 +1,144 @@
+# docker-compose.override.yml
+#
+# 本番環境用オーバーライド設定
+# 使用例:
+#   docker-compose -f docker-compose.yml -f docker-compose.override.yml up
+#
+# 注記: このファイルは .env で本番モード時に自動読み込みされます
+#       通常の開発時は無視されます
+
+version: '3.9'
+
+services:
+  # ========================
+  # Web アプリケーション（Nginx）
+  # ========================
+  web:
+    image: yourwish-web:latest
+    container_name: yourwish-web-prod
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - NODE_ENV=production
+      - TZ=Asia/Tokyo
+    volumes:
+      # SSL証明書マウント（オプション）
+      - ./certs:/etc/nginx/certs:ro
+      # Nginx ログ永続化
+      - web-logs:/var/log/nginx
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    networks:
+      - yourwish-network
+
+  # ========================
+  # バックエンド API（Node.js）
+  # ========================
+  api:
+    image: yourwish-api:latest
+    container_name: yourwish-api-prod
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - LOG_LEVEL=info
+      - TZ=Asia/Tokyo
+    volumes:
+      # ログ永続化
+      - api-logs:/app/logs
+      # キャッシュディレクトリ
+      - api-cache:/app/.cache
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    depends_on:
+      - web
+    networks:
+      - yourwish-network
+
+  # ========================
+  # リバースプロキシ（オプション）
+  # ========================
+  reverse-proxy:
+    image: caddy:alpine
+    container_name: yourwish-proxy
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    environment:
+      - TZ=Asia/Tokyo
+    restart: unless-stopped
+    networks:
+      - yourwish-network
+    depends_on:
+      - web
+      - api
+
+  # ========================
+  # ビルド環境（CI/CD用）
+  # ========================
+  builder:
+    image: cirrusci/flutter:3.24.0
+    container_name: yourwish-builder
+    working_dir: /workspace
+    volumes:
+      - .:/workspace
+      - build-cache:/workspace/.build-cache
+      - gradle-cache:/root/.gradle
+      - pub-cache:/root/.pub-cache
+    environment:
+      - BUILD_MODE=release
+      - CI=true
+    restart: "no"
+    profiles:
+      - ci
+    networks:
+      - yourwish-network
+
+# ========================
+# ボリューム定義
+# ========================
+volumes:
+  # Web ログ
+  web-logs:
+    driver: local
+
+  # API ログ・キャッシュ
+  api-logs:
+    driver: local
+  api-cache:
+    driver: local
+
+  # ビルドキャッシュ
+  build-cache:
+    driver: local
+  gradle-cache:
+    driver: local
+  pub-cache:
+    driver: local
+
+  # Caddy（リバースプロキシ）
+  caddy-data:
+    driver: local
+  caddy-config:
+    driver: local
+
+# ========================
+# ネットワーク定義
+# ========================
+networks:
+  yourwish-network:
+    driver: bridge

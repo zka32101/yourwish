@@ -35,11 +35,38 @@ scripts/new_sns_game.sh <新しいゲーム名> "説明文"
 [`apps/vote_survivor/`](apps/vote_survivor/README.md)
 （視聴者コメント投票で進行が決まるサバイバルゲーム）を追加済みです。
 
-## CI
+## 🚀 ビルド方法（ローカル環境不要）
+
+**最も簡単（Docker自動利用）:**
+
+```bash
+# Flutterアプリ全体をテスト
+./scripts/build.sh flutter
+
+# Android APK ビルド
+./scripts/build.sh flutter:android
+
+# Web ビルド
+./scripts/build.sh flutter:web
+```
+
+**詳細ガイド:** [`docs/LOCAL_ENV_FREE_BUILD.md`](docs/LOCAL_ENV_FREE_BUILD.md)
+
+前提条件：
+- ✅ Docker がインストール済み
+- ❌ Dart/Flutter SDK 不要
+- ❌ Node.js ローカルインストール不要
+
+## CI/CD
 
 各アプリの GitHub Actions ワークフローは `.github/workflows/` に配置し、
 `paths:` フィルタで該当アプリのディレクトリ変更時のみ起動するようにしています
 （例: `<app>-ci.yml` が `apps/<app>/**` の変更時のみ起動）。
+
+**自動デプロイワークフロー** (`.github/workflows/build-deploy.yml`):
+- main/master へのプッシュで自動実行
+- Lint → Test → Web ビルド → Android ビルド → デプロイ
+- **ビルド時間: 約 8-10 分**
 
 SNS配信用ゲームのCIは、共通の再利用可能ワークフロー
 `.github/workflows/flutter-app-ci.yml`（analyze + test）を各アプリの
