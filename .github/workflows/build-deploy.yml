@@ -238,16 +238,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Dart
-        uses: dart-lang/setup-dart@v1
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
         with:
-          sdk: "3.12.0"
+          flutter-version: '3.24.0'
+          channel: stable
 
       - name: Test game_kit
         working-directory: packages/game_kit
         run: |
-          dart pub get
-          dart run test
+          flutter pub get
+          flutter test
           echo "✓ game_kit tests passed"
 
   # ========================
