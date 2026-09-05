@@ -17,10 +17,17 @@ if (localPropertiesFile.exists()) {
 
 def flutterSdkPath = properties.getProperty('flutter.sdk')
 if (flutterSdkPath == null) {
-    flutterSdkPath = System.getenv("FLUTTER_ROOT")
+    // Try multiple environment variable names used by different Flutter setups
+    flutterSdkPath = System.getenv("FLUTTER_ROOT") ?: System.getenv("FLUTTER_HOME") ?: System.getenv("FLUTTER_SDK")
 }
 if (flutterSdkPath == null) {
-    throw new GradleException("Flutter SDK not found. Define location with flutter.sdk in the local.properties file.")
+    throw new GradleException("""
+        Flutter SDK not found. Please define location with one of:
+        1. flutter.sdk in local.properties file
+        2. FLUTTER_ROOT environment variable
+        3. FLUTTER_HOME environment variable
+        4. FLUTTER_SDK environment variable
+    """.stripIndent())
 }
 
 gradle.ext.flutterSdkPath = flutterSdkPath
