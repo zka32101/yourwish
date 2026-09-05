@@ -76,8 +76,6 @@ jobs:
     strategy:
       matrix:
         app:
-          - vote_survivor
-          - prefecture_defense
           - sns_game_template
 
     steps:
@@ -110,8 +108,6 @@ jobs:
     strategy:
       matrix:
         app:
-          - vote_survivor
-          - prefecture_defense
           - sns_game_template
 
     steps:
