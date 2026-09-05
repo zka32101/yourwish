@@ -256,6 +256,18 @@ jobs:
         working-directory: apps/${{ matrix.app }}
         run: flutter pub get
 
+      - name: Debug Flutter environment
+        working-directory: apps/${{ matrix.app }}
+        run: |
+          echo "=== Flutter Environment Debug ==="
+          which flutter
+          flutter --version
+          echo "FLUTTER_ROOT: $FLUTTER_ROOT"
+          echo "FLUTTER_HOME: $FLUTTER_HOME"
+          echo "FLUTTER_SDK: $FLUTTER_SDK"
+          echo "PATH: $PATH"
+          ls -la android/local.properties 2>/dev/null || echo "No local.properties found"
+
       - name: Build Android App Bundle
         working-directory: apps/${{ matrix.app }}
         run: flutter build appbundle --release
