@@ -268,6 +268,26 @@ jobs:
           echo "PATH: $PATH"
           ls -la android/local.properties 2>/dev/null || echo "No local.properties found"
 
+      - name: Create local.properties for Android build
+        working-directory: apps/${{ matrix.app }}/android
+        run: |
+          echo "=== Creating local.properties ==="
+          # Try different Flutter SDK paths
+          if [ -n "$FLUTTER_ROOT" ]; then
+            FLUTTER_SDK_PATH="$FLUTTER_ROOT"
+          elif [ -n "$FLUTTER_HOME" ]; then
+            FLUTTER_SDK_PATH="$FLUTTER_HOME"
+          elif command -v flutter &> /dev/null; then
+            FLUTTER_SDK_PATH="$(dirname $(dirname $(which flutter)))"
+          else
+            echo "ERROR: Flutter SDK not found!"
+            exit 1
+          fi
+
+          echo "flutter.sdk=$FLUTTER_SDK_PATH" > local.properties
+          echo "Created local.properties with Flutter SDK: $FLUTTER_SDK_PATH"
+          cat local.properties
+
       - name: Build Android App Bundle
         working-directory: apps/${{ matrix.app }}
         run: flutter build appbundle --release
