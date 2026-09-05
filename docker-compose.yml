@@ -47,10 +47,45 @@ services:
     # ホストのユーザー ID を使用してファイル権限問題を回避
     user: "node"
 
+  # Flutter ビルド環境（APK/AAB 生成用）
+  flutter:
+    image: cirrusci/flutter:latest
+    container_name: yourwish-flutter-build
+    working_dir: /workspace
+    volumes:
+      # プロジェクトソースコード
+      - .:/workspace
+      # Gradle キャッシュ（高速ビルド）
+      - gradle-cache:/root/.gradle
+      # Flutter キャッシュ
+      - flutter-cache:/root/.flutter_cache
+    environment:
+      # Flutter 設定
+      - FLUTTER_HOME=/opt/flutter
+      - PATH=/opt/flutter/bin:/opt/flutter/bin/cache/dart-sdk/bin:$PATH
+      # Android SDK 設定
+      - ANDROID_HOME=/opt/android-sdk-linux
+      # Java 設定（Gradle ビルドに必須）
+      - JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+      - JAVA_TOOL_OPTIONS=-Xmx1g
+    ports:
+      # ビルドサーバー・デバッガー用
+      - "8080-8090:8080-8090"
+    stdin_open: true
+    tty: true
+    command: /bin/bash
+    user: "root"
+
 volumes:
   # npm パッケージキャッシュ（ディスクベース・永続化）
   npm-cache:
     driver: local
   # npm グローバルパッケージ（ディスクベース・永続化）
   npm-global:
+    driver: local
+  # Gradle キャッシュ（高速ビルド）
+  gradle-cache:
+    driver: local
+  # Flutter キャッシュ
+  flutter-cache:
     driver: local
