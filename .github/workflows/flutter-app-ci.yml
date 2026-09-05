@@ -3,6 +3,8 @@ name: Flutter App CI (reusable)
 # apps/<app>/ や packages/<package>/ ごとのCIファイルから呼び出す共通ワークフロー。
 # 各アプリ側は `uses: ./.github/workflows/flutter-app-ci.yml` で
 # app-path を指定するだけで analyze + test が実行できる。
+#
+# 注記: Android APK/AAB ビルドは CI 環境の制限のため、ローカル環境で実行してください。
 on:
   workflow_call:
     inputs:
@@ -34,71 +36,3 @@ jobs:
 
       - name: Test
         run: flutter test
-
-  build-apk:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ${{ inputs.app-path }}
-    needs: analyze-and-test
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.x'
-          channel: stable
-
-      - name: Get dependencies
-        run: flutter pub get
-
-      - name: Build APK
-        run: flutter build apk --release --verbose 2>&1 || (echo "APK build skipped (Android SDK not available in CI)" && exit 0)
-
-      - name: Upload APK Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: apk-${{ inputs.app-path }}
-          path: ${{ inputs.app-path }}/build/app/outputs/apk/release/*.apk
-          retention-days: 7
-
-  build-aab:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ${{ inputs.app-path }}
-    needs: analyze-and-test
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.x'
-          channel: stable
-
-      - name: Get dependencies
-        run: flutter pub get
-
-      - name: Build AAB
-        run: flutter build appbundle --release --verbose 2>&1 || (echo "AAB build skipped (Android SDK not available in CI)" && exit 0)
-
-      - name: Upload AAB Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: aab-${{ inputs.app-path }}
-          path: ${{ inputs.app-path }}/build/app/outputs/bundle/release/*.aab
-          retention-days: 7
