@@ -60,6 +60,7 @@ ${BLUE}=== Unified Build Script ===${NC}
 ターゲット:
   ${YELLOW}flutter${NC}                # Flutterアプリ全体 (analyze + test)
   ${YELLOW}flutter:android${NC}        # Android APK ビルド
+  ${YELLOW}flutter:aab${NC}            # Android App Bundle ビルド
   ${YELLOW}flutter:ios${NC}            # iOS ビルド (Xcode 必須)
   ${YELLOW}flutter:web${NC}            # Web ビルド
   ${YELLOW}flutter:<app-name>${NC}     # 特定アプリのビルド
@@ -216,6 +217,37 @@ run_flutter_android() {
     fi
 }
 
+# Android App Bundle ビルド
+run_flutter_aab() {
+    local app_name="${1:-vote_survivor}"
+    local app_path="$PROJECT_ROOT/apps/$app_name"
+
+    if [ ! -d "$app_path" ]; then
+        log_error "アプリが見つかりません: $app_path"
+        exit 1
+    fi
+
+    log_info "Android App Bundle ビルド: $app_name"
+
+    if [ "$USE_DOCKER" = "true" ]; then
+        docker run --rm -v "$PROJECT_ROOT:/workspace" \
+            -w "/workspace/$app_path" \
+            cirrusci/flutter:$FLUTTER_VERSION \
+            sh -c "flutter pub get && flutter build appbundle --release"
+    else
+        cd "$app_path"
+        flutter pub get
+        flutter build appbundle --release
+        cd - > /dev/null
+    fi
+
+    log_success "Android App Bundle ビルド 完了: $app_name"
+    if [ "$USE_DOCKER" = "true" ]; then
+        echo ""
+        log_info "出力: $app_path/build/app/outputs/bundle/release/*.aab"
+    fi
+}
+
 # iOS ビルド
 run_flutter_ios() {
     local app_name="${1:-vote_survivor}"
@@ -331,6 +363,17 @@ main() {
             check_docker
             app_name="${TARGET#flutter:android:}"
             run_flutter_android "$app_name"
+            ;;
+        flutter:aab)
+            setup_cache
+            check_docker
+            run_flutter_aab "${2:-vote_survivor}"
+            ;;
+        flutter:aab:*)
+            setup_cache
+            check_docker
+            app_name="${TARGET#flutter:aab:}"
+            run_flutter_aab "$app_name"
             ;;
         flutter:ios)
             run_flutter_ios "${2:-vote_survivor}"
