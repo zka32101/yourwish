@@ -227,6 +227,47 @@ jobs:
           retention-days: 7
 
   # ========================
+  # ジョブ5.5: Android App Bundle ビルド
+  # ========================
+  build-aab:
+    name: Build Android App Bundle
+    needs: [lint, test]
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'push' &&
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+
+    strategy:
+      matrix:
+        app:
+          - vote_survivor
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+          channel: stable
+
+      - name: Get dependencies
+        working-directory: apps/${{ matrix.app }}
+        run: flutter pub get
+
+      - name: Build Android App Bundle
+        working-directory: apps/${{ matrix.app }}
+        run: flutter build appbundle --release
+
+      - name: Upload AAB artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: aab-${{ matrix.app }}
+          path: apps/${{ matrix.app }}/build/app/outputs/bundle/release/
+          retention-days: 7
+
+  # ========================
   # ジョブ6: パッケージテスト
   # ========================
   test-packages:
@@ -256,7 +297,7 @@ jobs:
   # ========================
   deploy:
     name: Deploy
-    needs: [build-web, build-android, test-packages]
+    needs: [build-web, build-android, build-aab, test-packages]
     runs-on: ubuntu-latest
     if: |
       github.event_name == 'push' &&
@@ -317,7 +358,8 @@ jobs:
           echo "| Test | ${{ needs.test.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Packages | ${{ needs.test-packages.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Web Build | ${{ needs.build-web.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Android Build | ${{ needs.build-android.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Android Build (APK) | ${{ needs.build-android.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Android Build (AAB) | ${{ needs.build-aab.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
           echo "**Branch:** ${{ github.ref }}" >> $GITHUB_STEP_SUMMARY
