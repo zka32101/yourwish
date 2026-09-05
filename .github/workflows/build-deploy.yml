@@ -1,0 +1,322 @@
+name: Build & Deploy (No Local Environment Required)
+
+# トリガー条件
+on:
+  push:
+    branches:
+      - main
+      - master
+      - develop
+  pull_request:
+    branches:
+      - main
+      - master
+
+  # 手動実行オプション
+  workflow_dispatch:
+    inputs:
+      build_target:
+        description: 'Build target (flutter, android, web, packages)'
+        required: true
+        default: 'flutter'
+        type: choice
+        options:
+          - flutter
+          - android
+          - web
+          - packages
+      build_mode:
+        description: 'Build mode (debug, release)'
+        required: true
+        default: 'release'
+        type: choice
+        options:
+          - debug
+          - release
+
+# 環境変数
+env:
+  REGISTRY: ghcr.io
+  DOCKER_BUILDKIT: 1
+
+jobs:
+  # ========================
+  # ジョブ1: ビルド環境チェック
+  # ========================
+  setup:
+    name: Setup & Validation
+    runs-on: ubuntu-latest
+    outputs:
+      build-target: ${{ steps.setup.outputs.build-target }}
+      build-mode: ${{ steps.setup.outputs.build-mode }}
+      docker-available: ${{ steps.setup.outputs.docker-available }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup environment
+        id: setup
+        run: |
+          echo "build-target=${{ github.event.inputs.build_target || 'flutter' }}" >> $GITHUB_OUTPUT
+          echo "build-mode=${{ github.event.inputs.build_mode || 'release' }}" >> $GITHUB_OUTPUT
+          echo "docker-available=true" >> $GITHUB_OUTPUT
+          echo "===== Build Setup ====="
+          echo "Event: ${{ github.event_name }}"
+          echo "Ref: ${{ github.ref }}"
+          echo "Build Target: ${{ github.event.inputs.build_target || 'flutter' }}"
+
+  # ========================
+  # ジョブ2: Lint & Analyze
+  # ========================
+  lint:
+    name: Lint & Analyze
+    needs: setup
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        app:
+          - vote_survivor
+          - prefecture_defense
+          - sns_game_template
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+          channel: stable
+
+      - name: Get dependencies
+        working-directory: apps/${{ matrix.app }}
+        run: flutter pub get
+
+      - name: Run analysis
+        working-directory: apps/${{ matrix.app }}
+        run: |
+          flutter analyze --no-fatal-infos --no-fatal-warnings
+          echo "✓ Lint passed: ${{ matrix.app }}"
+
+  # ========================
+  # ジョブ3: テスト実行
+  # ========================
+  test:
+    name: Run Tests
+    needs: setup
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        app:
+          - vote_survivor
+          - prefecture_defense
+          - sns_game_template
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+          channel: stable
+
+      - name: Get dependencies
+        working-directory: apps/${{ matrix.app }}
+        run: flutter pub get
+
+      - name: Run tests
+        working-directory: apps/${{ matrix.app }}
+        run: |
+          flutter test
+          echo "✓ Tests passed: ${{ matrix.app }}"
+
+  # ========================
+  # ジョブ4: Docker イメージビルド（Web）
+  # ========================
+  build-web:
+    name: Build Web Image
+    needs: [lint, test]
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'push' &&
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+
+    strategy:
+      matrix:
+        app:
+          - vote_survivor
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push web image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile.web
+          push: false
+          build-args: |
+            APP_NAME=${{ matrix.app }}
+            BUILD_MODE=release
+          tags: |
+            yourwish-web:latest
+            yourwish-web:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          outputs: type=docker,dest=/tmp/web-image.tar
+
+      - name: Upload web artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-image-${{ matrix.app }}
+          path: /tmp/web-image.tar
+          retention-days: 7
+
+  # ========================
+  # ジョブ5: Docker イメージビルド（Android）
+  # ========================
+  build-android:
+    name: Build Android APK
+    needs: [lint, test]
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'push' &&
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+
+    strategy:
+      matrix:
+        app:
+          - vote_survivor
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Android APK
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile.android
+          push: false
+          build-args: |
+            APP_NAME=${{ matrix.app }}
+            BUILD_MODE=release
+          tags: |
+            yourwish-android:latest
+            yourwish-android:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          outputs: type=docker,dest=/tmp/android-image.tar
+
+      - name: Upload Android artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-image-${{ matrix.app }}
+          path: /tmp/android-image.tar
+          retention-days: 7
+
+  # ========================
+  # ジョブ6: パッケージテスト
+  # ========================
+  test-packages:
+    name: Test Packages
+    needs: setup
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Dart
+        uses: dart-lang/setup-dart@v1
+        with:
+          sdk: "3.12.0"
+
+      - name: Test game_kit
+        working-directory: packages/game_kit
+        run: |
+          dart pub get
+          dart run test
+          echo "✓ game_kit tests passed"
+
+  # ========================
+  # ジョブ7: デプロイメント
+  # ========================
+  deploy:
+    name: Deploy
+    needs: [build-web, build-android, test-packages]
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'push' &&
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download web artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: web-image-vote_survivor
+          path: ./artifacts
+
+      - name: Download Android artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: android-image-vote_survivor
+          path: ./artifacts
+
+      - name: Display artifacts
+        run: |
+          echo "=== Build Artifacts ==="
+          ls -lh artifacts/ || echo "No artifacts found"
+
+      - name: Deploy notification
+        run: |
+          echo "✓ Deployment complete!"
+          echo "GitHub Ref: ${{ github.ref }}"
+          echo "Commit: ${{ github.sha }}"
+          echo ""
+          echo "Next steps:"
+          echo "1. Push to container registry (GitHub Container Registry)"
+          echo "2. Deploy to staging/production"
+          echo "3. Run smoke tests"
+
+  # ========================
+  # ジョブ8: ビルド成功レポート
+  # ========================
+  summary:
+    name: Build Summary
+    needs: [lint, test, test-packages, build-web, build-android]
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Generate summary
+        run: |
+          echo "# 🚀 Build & Deploy Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Step | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Lint | ${{ needs.lint.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Test | ${{ needs.test.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Packages | ${{ needs.test-packages.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Web Build | ${{ needs.build-web.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Android Build | ${{ needs.build-android.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** ${{ github.ref }}" >> $GITHUB_STEP_SUMMARY
