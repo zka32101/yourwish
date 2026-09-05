@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:template_sns_game/main.dart';
+import 'package:sns_game_template/main.dart';
 
 void main() {
   testWidgets('起動するとテンプレート画面が表示される', (tester) async {

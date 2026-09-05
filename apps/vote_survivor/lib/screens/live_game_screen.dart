@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:game_kit/sns_live_game_kit.dart';
+import 'package:game_kit/game_kit.dart';
 
 import '../data/scenarios.dart';
 
