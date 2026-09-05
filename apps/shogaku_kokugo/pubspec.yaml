@@ -1,0 +1,22 @@
+name: shogaku_kokugo
+description: "小学国語SNS配信ゲーム - 視聴者投票で回答を決める国語クイズ"
+publish_to: 'none'
+
+version: 0.1.0+1
+
+environment:
+  sdk: ">=3.5.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  game_kit:
+    path: ../../packages/game_kit
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
