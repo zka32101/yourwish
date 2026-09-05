@@ -1,0 +1,23 @@
+name: CI (shoukoku_kokugo)
+
+# apps/shoukoku_kokugo/ または依存している packages/game_kit/
+# の変更時のみ起動する。scripts/new_sns_game.sh はこのファイルをコピーして
+# 新しい環境のCIを生成する（コピー先では shoukoku_kokugo の部分が
+# 新しいゲーム名に置き換わる）。
+on:
+  push:
+    branches: [master, main]
+    paths:
+      - 'apps/shoukoku_kokugo/**'
+      - 'packages/game_kit/**'
+  pull_request:
+    paths:
+      - 'apps/shoukoku_kokugo/**'
+      - 'packages/game_kit/**'
+  workflow_dispatch:
+
+jobs:
+  ci:
+    uses: ./.github/workflows/flutter-app-ci.yml
+    with:
+      app-path: apps/shoukoku_kokugo
