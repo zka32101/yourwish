@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - 'geography-puzzle-king-v*'
+  workflow_dispatch: {}
 
 defaults:
   run:
@@ -22,6 +23,29 @@ jobs:
 
       - name: Get dependencies
         run: flutter pub get
+
+      # gradle-wrapper.jar がリポジトリにコミットされていない場合、gradlew は
+      # gradle-wrapper.properties を無視して runner の system Gradle にフォールバックし、
+      # プロジェクトが要求するバージョンと食い違って失敗する (vote_survivor で確認済みの問題)。
+      - name: Ensure Gradle wrapper JAR
+        working-directory: apps/prefecture_defense/android
+        run: |
+          if [ ! -f gradle/wrapper/gradle-wrapper.jar ]; then
+            echo "gradle-wrapper.jar is missing; generating one"
+            GRADLE_VERSION=$(sed -n 's|.*/gradle-\(.*\)-all\.zip|\1|p' gradle/wrapper/gradle-wrapper.properties)
+            echo "target Gradle version: $GRADLE_VERSION"
+            TMP=$(mktemp -d)
+            touch "$TMP/settings.gradle"
+            (cd "$TMP" && gradle wrapper --gradle-version "$GRADLE_VERSION" --distribution-type all -q)
+            cp "$TMP/gradle/wrapper/gradle-wrapper.jar" gradle/wrapper/gradle-wrapper.jar
+            rm -rf "$TMP"
+          fi
+
+      - name: Debug Gradle setup
+        working-directory: apps/prefecture_defense/android
+        run: |
+          java -version 2>&1
+          ./gradlew --version 2>&1 | head -15 || echo "gradlew invocation failed"
 
       - name: Build APK
         run: flutter build apk --release
