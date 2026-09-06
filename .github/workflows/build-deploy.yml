@@ -299,6 +299,20 @@ jobs:
           echo "Created local.properties with Flutter SDK: $FLUTTER_SDK_PATH"
           cat local.properties
 
+      - name: Debug Gradle setup
+        working-directory: apps/${{ matrix.app }}/android
+        run: |
+          echo "=== wrapper dir ==="
+          ls -la gradle/wrapper/ || true
+          echo "=== gradle-wrapper.properties ==="
+          cat gradle/wrapper/gradle-wrapper.properties || true
+          echo "=== gradlew present? ==="
+          ls -la gradlew || echo "no gradlew"
+          echo "=== gradle version actually used by wrapper ==="
+          ./gradlew --version 2>&1 | head -20 || echo "gradlew invocation failed"
+          echo "=== system gradle (fallback candidate) ==="
+          which gradle && gradle --version 2>&1 | head -12 || echo "no system gradle on PATH"
+
       - name: Build Android App Bundle
         working-directory: apps/${{ matrix.app }}
         run: flutter build appbundle --release
