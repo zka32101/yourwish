@@ -271,6 +271,8 @@ jobs:
           echo "=== Flutter Environment Debug ==="
           which flutter
           flutter --version
+          java -version 2>&1
+          echo "JAVA_HOME: $JAVA_HOME"
           echo "FLUTTER_ROOT: $FLUTTER_ROOT"
           echo "FLUTTER_HOME: $FLUTTER_HOME"
           echo "FLUTTER_SDK: $FLUTTER_SDK"
