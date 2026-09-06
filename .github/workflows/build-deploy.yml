@@ -233,9 +233,11 @@ jobs:
     name: Build Android App Bundle
     needs: [lint, test]
     runs-on: ubuntu-latest
+    # PR でも実行する: master にマージする前に AAB ビルドの成否を検証するため
     if: |
-      github.event_name == 'push' &&
-      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+      github.event_name == 'pull_request' ||
+      (github.event_name == 'push' &&
+       (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'))
 
     strategy:
       matrix:
@@ -245,6 +247,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      # AGP 8.1 は Java 17 を要求する。runner のデフォルト JDK に依存しないよう固定する
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -262,6 +271,8 @@ jobs:
           echo "=== Flutter Environment Debug ==="
           which flutter
           flutter --version
+          java -version 2>&1
+          echo "JAVA_HOME: $JAVA_HOME"
           echo "FLUTTER_ROOT: $FLUTTER_ROOT"
           echo "FLUTTER_HOME: $FLUTTER_HOME"
           echo "FLUTTER_SDK: $FLUTTER_SDK"
@@ -287,6 +298,41 @@ jobs:
           echo "flutter.sdk=$FLUTTER_SDK_PATH" > local.properties
           echo "Created local.properties with Flutter SDK: $FLUTTER_SDK_PATH"
           cat local.properties
+
+      # gradle-wrapper.jar はリポジトリにコミットされていない。JAR が無いと gradlew は
+      # gradle-wrapper.properties を無視し、runner の system Gradle (9.x) が使われてしまう。
+      # Gradle 9 は AGP 7.x/8.x と非互換なため、wrapper を確実に用意する。
+      - name: Ensure Gradle wrapper JAR
+        working-directory: apps/${{ matrix.app }}/android
+        run: |
+          if [ ! -f gradle/wrapper/gradle-wrapper.jar ]; then
+            echo "gradle-wrapper.jar is missing; generating one"
+            GRADLE_VERSION=$(sed -n 's|.*/gradle-\(.*\)-all\.zip|\1|p' gradle/wrapper/gradle-wrapper.properties)
+            echo "target Gradle version: $GRADLE_VERSION"
+            TMP=$(mktemp -d)
+            # Gradle は「Gradle ビルド」でないディレクトリでは wrapper タスクを実行できないため、
+            # 空の settings.gradle を置いて最小構成のビルドに見せる
+            touch "$TMP/settings.gradle"
+            (cd "$TMP" && gradle wrapper --gradle-version "$GRADLE_VERSION" --distribution-type all -q)
+            cp "$TMP/gradle/wrapper/gradle-wrapper.jar" gradle/wrapper/gradle-wrapper.jar
+            cp "$TMP/gradlew" gradlew
+            chmod +x gradlew
+            rm -rf "$TMP"
+          fi
+
+      - name: Debug Gradle setup
+        working-directory: apps/${{ matrix.app }}/android
+        run: |
+          echo "=== wrapper dir ==="
+          ls -la gradle/wrapper/ || true
+          echo "=== gradle-wrapper.properties ==="
+          cat gradle/wrapper/gradle-wrapper.properties || true
+          echo "=== gradlew present? ==="
+          ls -la gradlew || echo "no gradlew"
+          echo "=== gradle version actually used by wrapper ==="
+          ./gradlew --version 2>&1 | head -20 || echo "gradlew invocation failed"
+          echo "=== system gradle (fallback candidate) ==="
+          which gradle && gradle --version 2>&1 | head -12 || echo "no system gradle on PATH"
 
       - name: Build Android App Bundle
         working-directory: apps/${{ matrix.app }}
