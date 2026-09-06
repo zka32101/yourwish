@@ -54,7 +54,27 @@ if ! docker compose ps flutter 2>/dev/null | grep -q "flutter"; then
 fi
 
 echo -e "${GREEN}✅ Flutter environment ready${NC}"
+
+# 4. Android Emulator 初期化（ローカル環境の場合）
+if [ -f "scripts/setup-android-emulator.sh" ]; then
+  echo -e "${BLUE}🎮 Initializing Android Emulator environment...${NC}"
+  chmod +x scripts/setup-android-emulator.sh
+
+  # アプリ名を抽出
+  APP_NAME="${PWD##*/}"
+
+  # セットアップ実行（エラー時も続行）
+  bash scripts/setup-android-emulator.sh "$APP_NAME" 2>/dev/null || {
+    echo -e "${YELLOW}⚠ Android setup needs manual attention${NC}"
+    echo "  Run: bash scripts/setup-android-emulator.sh"
+  }
+fi
+
 echo -e "${BLUE}📦 Build commands:${NC}"
 echo "  docker compose exec flutter bash"
 echo "  cd apps/shoukoku_kokugo"
 echo "  flutter pub get && flutter build apk --release"
+echo ""
+echo -e "${BLUE}📱 Android Emulator test:${NC}"
+echo "  bash scripts/setup-android-emulator.sh"
+echo "  emulator -avd [app_name] -no-audio -no-boot-anim &"
