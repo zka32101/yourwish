@@ -310,6 +310,9 @@ jobs:
             GRADLE_VERSION=$(sed -n 's|.*/gradle-\(.*\)-all\.zip|\1|p' gradle/wrapper/gradle-wrapper.properties)
             echo "target Gradle version: $GRADLE_VERSION"
             TMP=$(mktemp -d)
+            # Gradle は「Gradle ビルド」でないディレクトリでは wrapper タスクを実行できないため、
+            # 空の settings.gradle を置いて最小構成のビルドに見せる
+            touch "$TMP/settings.gradle"
             (cd "$TMP" && gradle wrapper --gradle-version "$GRADLE_VERSION" --distribution-type all -q)
             cp "$TMP/gradle/wrapper/gradle-wrapper.jar" gradle/wrapper/gradle-wrapper.jar
             cp "$TMP/gradlew" gradlew
