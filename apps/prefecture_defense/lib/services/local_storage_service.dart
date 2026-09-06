@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:geography_puzzle_king/models/game_model.dart';
+import 'package:prefecture_defense/models/game_model.dart';
 
 class LocalStorageService {
   static const _keyStats   = 'game_stats_v1';

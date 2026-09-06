@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:geography_puzzle_king/models/user_model.dart';
+import 'package:prefecture_defense/models/user_model.dart';
 
 final authStateProvider = StateProvider<AuthState>((ref) => AuthState.initial);
 

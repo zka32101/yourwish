@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:geography_puzzle_king/config/constants.dart';
-import 'package:geography_puzzle_king/models/prefecture_record.dart';
-import 'package:geography_puzzle_king/utils/prefecture_data.dart';
+import 'package:prefecture_defense/config/constants.dart';
+import 'package:prefecture_defense/models/prefecture_record.dart';
+import 'package:prefecture_defense/utils/prefecture_data.dart';
 
 const Map<String, String> prefectureEmojis = {
   '01': '🏔️', '02': '🌲', '03': '🌲', '04': '🏔️', '05': '🌲', '06': '🌊',

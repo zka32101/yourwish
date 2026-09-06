@@ -1,8 +1,8 @@
 import 'dart:math';
 import 'dart:ui';
-import 'package:geography_puzzle_king/config/difficulty_config.dart';
-import 'package:geography_puzzle_king/models/td_model.dart';
-import 'package:geography_puzzle_king/utils/prefecture_data.dart';
+import 'package:prefecture_defense/config/difficulty_config.dart';
+import 'package:prefecture_defense/models/td_model.dart';
+import 'package:prefecture_defense/utils/prefecture_data.dart';
 
 /// タワーディフェンスゲームエンジン（純粋ロジック・UIなし）
 class TdEngine {

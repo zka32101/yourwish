@@ -2,16 +2,16 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:geography_puzzle_king/config/constants.dart';
-import 'package:geography_puzzle_king/models/td_model.dart';
-import 'package:geography_puzzle_king/providers/game_provider.dart';
-import 'package:geography_puzzle_king/screens/game/result_screen.dart';
-import 'package:geography_puzzle_king/services/audio_service.dart';
-import 'package:geography_puzzle_king/services/td_engine.dart';
-import 'package:geography_puzzle_king/utils/game_assets.dart';
-import 'package:geography_puzzle_king/utils/history_stage_data.dart';
-import 'package:geography_puzzle_king/utils/prefecture_data.dart';
-import 'package:geography_puzzle_king/utils/region_data.dart';
+import 'package:prefecture_defense/config/constants.dart';
+import 'package:prefecture_defense/models/td_model.dart';
+import 'package:prefecture_defense/providers/game_provider.dart';
+import 'package:prefecture_defense/screens/game/result_screen.dart';
+import 'package:prefecture_defense/services/audio_service.dart';
+import 'package:prefecture_defense/services/td_engine.dart';
+import 'package:prefecture_defense/utils/game_assets.dart';
+import 'package:prefecture_defense/utils/history_stage_data.dart';
+import 'package:prefecture_defense/utils/prefecture_data.dart';
+import 'package:prefecture_defense/utils/region_data.dart';
 
 // ─── ビジュアルエフェクト データクラス ───────────────────────────────────
 

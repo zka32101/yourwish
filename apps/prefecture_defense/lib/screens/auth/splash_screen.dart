@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:geography_puzzle_king/config/constants.dart';
+import 'package:prefecture_defense/config/constants.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({Key? key}) : super(key: key);

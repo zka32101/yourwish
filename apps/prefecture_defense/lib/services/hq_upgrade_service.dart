@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:geography_puzzle_king/models/hq_upgrade_model.dart';
+import 'package:prefecture_defense/models/hq_upgrade_model.dart';
 
 class HqUpgradeService {
   static const _levelsKey = 'hq_upgrade_levels_v1';

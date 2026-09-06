@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:geography_puzzle_king/models/ranking_model.dart';
-import 'package:geography_puzzle_king/models/game_model.dart';
+import 'package:prefecture_defense/models/ranking_model.dart';
+import 'package:prefecture_defense/models/game_model.dart';
 
 class RankingService {
   final SharedPreferences _prefs;

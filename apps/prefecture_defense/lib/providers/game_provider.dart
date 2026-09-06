@@ -1,16 +1,16 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:geography_puzzle_king/config/difficulty_config.dart';
-import 'package:geography_puzzle_king/models/achievement_model.dart';
-import 'package:geography_puzzle_king/models/game_model.dart';
-import 'package:geography_puzzle_king/models/player_level_model.dart';
-import 'package:geography_puzzle_king/services/achievement_service.dart';
-import 'package:geography_puzzle_king/services/local_storage_service.dart';
-import 'package:geography_puzzle_king/services/ranking_service.dart';
-import 'package:geography_puzzle_king/services/player_level_service.dart';
-import 'package:geography_puzzle_king/services/daily_bonus_service.dart';
-import 'package:geography_puzzle_king/models/hq_upgrade_model.dart';
-import 'package:geography_puzzle_king/services/hq_upgrade_service.dart';
+import 'package:prefecture_defense/config/difficulty_config.dart';
+import 'package:prefecture_defense/models/achievement_model.dart';
+import 'package:prefecture_defense/models/game_model.dart';
+import 'package:prefecture_defense/models/player_level_model.dart';
+import 'package:prefecture_defense/services/achievement_service.dart';
+import 'package:prefecture_defense/services/local_storage_service.dart';
+import 'package:prefecture_defense/services/ranking_service.dart';
+import 'package:prefecture_defense/services/player_level_service.dart';
+import 'package:prefecture_defense/services/daily_bonus_service.dart';
+import 'package:prefecture_defense/models/hq_upgrade_model.dart';
+import 'package:prefecture_defense/services/hq_upgrade_service.dart';
 
 // ─── SharedPreferences 初期化 (FutureProvider) ──────────────────────────────
 
