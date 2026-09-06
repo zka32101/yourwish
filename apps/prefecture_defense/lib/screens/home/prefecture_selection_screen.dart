@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:geography_puzzle_king/config/constants.dart';
-import 'package:geography_puzzle_king/config/difficulty_config.dart';
-import 'package:geography_puzzle_king/models/td_model.dart';
-import 'package:geography_puzzle_king/providers/game_provider.dart';
-import 'package:geography_puzzle_king/screens/game/game_screen.dart';
-import 'package:geography_puzzle_king/utils/prefecture_data.dart';
+import 'package:prefecture_defense/config/constants.dart';
+import 'package:prefecture_defense/config/difficulty_config.dart';
+import 'package:prefecture_defense/models/td_model.dart';
+import 'package:prefecture_defense/providers/game_provider.dart';
+import 'package:prefecture_defense/screens/game/game_screen.dart';
+import 'package:prefecture_defense/utils/prefecture_data.dart';
 
 class PrefectureSelectionScreen extends ConsumerStatefulWidget {
   const PrefectureSelectionScreen({Key? key}) : super(key: key);

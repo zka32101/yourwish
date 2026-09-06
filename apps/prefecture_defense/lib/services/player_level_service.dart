@@ -1,5 +1,5 @@
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:geography_puzzle_king/models/player_level_model.dart';
+import 'package:prefecture_defense/models/player_level_model.dart';
 
 class PlayerLevelService {
   final SharedPreferences _prefs;

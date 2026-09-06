@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:geography_puzzle_king/config/constants.dart';
-import 'package:geography_puzzle_king/models/hq_upgrade_model.dart';
-import 'package:geography_puzzle_king/providers/game_provider.dart';
+import 'package:prefecture_defense/config/constants.dart';
+import 'package:prefecture_defense/models/hq_upgrade_model.dart';
+import 'package:prefecture_defense/providers/game_provider.dart';
 
 /// 本部強化画面: クリアで貯まる研究ポイントを使い、全プレイ共通の永続強化を購入する
 class HqUpgradeScreen extends ConsumerWidget {

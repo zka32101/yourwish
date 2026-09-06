@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:geography_puzzle_king/config/app_config.dart';
-import 'package:geography_puzzle_king/config/constants.dart';
-import 'package:geography_puzzle_king/providers/auth_provider.dart';
-import 'package:geography_puzzle_king/services/audio_service.dart';
+import 'package:prefecture_defense/config/app_config.dart';
+import 'package:prefecture_defense/config/constants.dart';
+import 'package:prefecture_defense/providers/auth_provider.dart';
+import 'package:prefecture_defense/services/audio_service.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({Key? key}) : super(key: key);

@@ -1,4 +1,4 @@
-import 'package:geography_puzzle_king/models/td_model.dart';
+import 'package:prefecture_defense/models/td_model.dart';
 
 class PrefectureData {
   final String code;

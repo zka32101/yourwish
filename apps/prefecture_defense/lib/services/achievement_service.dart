@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:geography_puzzle_king/models/achievement_model.dart';
-import 'package:geography_puzzle_king/models/game_model.dart';
+import 'package:prefecture_defense/models/achievement_model.dart';
+import 'package:prefecture_defense/models/game_model.dart';
 
 class AchievementService {
   static const _key = 'achievements_v1';

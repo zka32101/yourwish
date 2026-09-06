@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:geography_puzzle_king/config/constants.dart';
-import 'package:geography_puzzle_king/models/user_model.dart';
-import 'package:geography_puzzle_king/providers/auth_provider.dart';
+import 'package:prefecture_defense/config/constants.dart';
+import 'package:prefecture_defense/models/user_model.dart';
+import 'package:prefecture_defense/providers/auth_provider.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);

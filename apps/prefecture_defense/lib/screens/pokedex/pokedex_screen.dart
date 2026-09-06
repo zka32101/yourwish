@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:geography_puzzle_king/config/constants.dart';
-import 'package:geography_puzzle_king/models/achievement_model.dart';
-import 'package:geography_puzzle_king/providers/game_provider.dart';
-import 'package:geography_puzzle_king/utils/prefecture_data.dart';
+import 'package:prefecture_defense/config/constants.dart';
+import 'package:prefecture_defense/models/achievement_model.dart';
+import 'package:prefecture_defense/providers/game_provider.dart';
+import 'package:prefecture_defense/utils/prefecture_data.dart';
 
 class PokedexScreen extends ConsumerStatefulWidget {
   const PokedexScreen({Key? key}) : super(key: key);
