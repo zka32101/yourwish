@@ -72,6 +72,11 @@
         "name": "session-start-hook",
         "description": "セッション開始フック（自動初期化）",
         "location": ".claude/hooks/on-session-start.sh"
+      },
+      {
+        "name": "build-and-test",
+        "description": "ビルド完了後の自動エミュレータテスト（起動・連携・購入・認証・広告）",
+        "location": ".claude/skills/build-and-test/SKILL.md"
       }
     ]
   },
