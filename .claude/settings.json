@@ -21,7 +21,8 @@
     "additional": [
       "README.md",
       "docs/sns-live-game-environments.md",
-      "docs/LOCAL_ENV_FREE_BUILD.md"
+      "docs/LOCAL_ENV_FREE_BUILD.md",
+      "docs/orchestrator-architecture.md"
     ],
     "sessionStart": ".claude/SessionStart.md"
   },
