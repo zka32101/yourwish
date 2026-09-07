@@ -151,6 +151,20 @@ seiza_kore のビルド修正セッションが「Google Drive アップロー�
 ### 2026-09-06〜07: shared_core → cross_promo_kit の依存URL切れ
 詳細は「shared_core / cross_promo_kit に関する既知の問題」セクション参照。原因: リポジトリが org-zka32101 から zka32101 個人アカウントへ移動したが、依存参照が更新されていなかった。
 
+### 2026-09-07: kokugo-kore(国語) — 公開済みだが Google Play 検索に出てこない(調査中)
+**症状**: 1週間以上前に Production(製品版)公開済み・直接リンクは開けるが、Play ストア検索に出てこない。
+
+**除外できた要因**(スクリーンショットで確認済み):
+- リリーストラック: 製品版が「有効」でステータス正常(非公開トラックの誤りではない)
+- 国/地域ターゲティング: 「日本」が正しく単独でターゲット設定済み(誤設定ではない)
+
+**残る手がかり**: Play Console が明示的に警告 「アプリの最適化がしきい値を下回っています — 難読化 11%(閾値 25%)— Google Playでの認知度や公開機能に影響する可能性」。
+`android/app/build.gradle.kts` は `isMinifyEnabled = true` / `isShrinkResources = true` 済みだが、`proguard-rules.pro` に `-keep class io.flutter.** { *; }` 等、パッケージ丸ごとの広範な `-keep` ルールが多数(Flutter, Firebase/GMS, Play Billing, Kotlin/Kotlinx, Play Core, AdMob)あり、これが Java/Kotlin 側クラスの大半を難読化対象外にしている可能性が高い(Flutter アプリは Dart ロジックがネイティブコンパイルされるため、そもそも Java 側クラスの大半がサードパーティSDKで占められやすい構造的な弱点でもある)。
+
+**対応**: 今のリリース(16/1.4.2)はそのまま維持し、次リリースに向けて kokugo-kore のビルド修正セッションに `proguard-rules.pro` の過剰な `-keep` の見直し(特に `kotlin.**`/`kotlinx.**`/`io.flutter.plugins.**` を必要最小限に)を依頼(trigger `trig_01BgZvcAhVbXjGkx1fPNJJEX`)。
+
+**注意**: 難読化率警告は「影響する可能性がある」という表現に留まり、検索非表示の断定的な原因とは限らない。ストア掲載情報(タイトル/説明文のキーワード)・審査系設定(コンテンツレーティング/データセーフティ)未完了なども並行して確認中。他アプリでも同種の「公開済みなのに検索に出ない」報告があれば、まずこのチェックリスト(①トラック ②国設定 ③難読化率 ④ストア掲載情報のキーワード ⑤審査系設定の完了)から潰すこと。
+
 ## 🔗 関連ドキュメント
 
 - [`docs/android-emulator-testing.md`](./android-emulator-testing.md) — Android Emulator テスト環境
