@@ -36,10 +36,10 @@ services:
     deploy:
       resources:
         limits:
-          cpus: ${CLAUDE_CPU_LIMIT:-"2.0"}
+          cpus: ${CLAUDE_CPU_LIMIT:-2.0}
           memory: ${CLAUDE_MEMORY_LIMIT:-1G}
         reservations:
-          cpus: ${CLAUDE_CPU_RESERVE:-"1.0"}
+          cpus: ${CLAUDE_CPU_RESERVE:-1.0}
           memory: ${CLAUDE_MEMORY_RESERVE:-512M}
     stdin_open: true
     tty: true
