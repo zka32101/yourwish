@@ -1,0 +1,210 @@
+# Flutter Build Template Workflow
+#
+# このテンプレートは Flutter プロジェクトの標準ビルド・テスト・デプロイパイプラインを提供します。
+# 各プロジェクトで以下のファイルをカスタマイズして使用してください：
+#
+# 1. ワークフロー名とトリガー条件
+# 2. ビルド対象プロジェクトのパス
+# 3. デプロイ先の設定
+#
+# 詳細は docs/build-ci-cd-guide.md を参照してください。
+
+name: Flutter Build & Test Template
+
+on:
+  push:
+    branches: ['main', 'develop', 'claude/**']
+    paths-ignore:
+      - 'docs/**'
+      - '**.md'
+  pull_request:
+    branches: ['main', 'develop']
+  workflow_dispatch:
+  schedule:
+    - cron: '0 2 * * 0'  # Weekly on Sunday 2 AM UTC
+
+env:
+  FLUTTER_VERSION: '3.24.0'
+  JAVA_VERSION: '17'
+
+jobs:
+  # ==========================================
+  # セットアップ・検証
+  # ==========================================
+  setup:
+    name: Setup & Validation
+    runs-on: ubuntu-latest
+    outputs:
+      build-needed: ${{ steps.check.outputs.build-needed }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Check if build is needed
+        id: check
+        run: |
+          # カスタマイズ: ビルドが必要か判定するロジック
+          # 例: 特定ファイルの変更があるか確認
+          echo "build-needed=true" >> $GITHUB_OUTPUT
+
+  # ==========================================
+  # コード分析・テスト
+  # ==========================================
+  analyze-and-test:
+    name: Analyze & Test
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Run analysis
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+
+      - name: Run tests
+        run: flutter test
+        continue-on-error: true
+
+  # ==========================================
+  # Android ビルド
+  # ==========================================
+  build-android:
+    name: Build Android (${{ matrix.build-type }})
+    needs: analyze-and-test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        build-type: ['apk', 'aab']
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Build ${{ matrix.build-type }}
+        run: |
+          if [ "${{ matrix.build-type }}" = "apk" ]; then
+            flutter build apk --release
+          else
+            flutter build appbundle --release
+          fi
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: android-${{ matrix.build-type }}
+          path: build/app/outputs/**/*
+
+  # ==========================================
+  # iOS ビルド
+  # ==========================================
+  build-ios:
+    name: Build iOS
+    needs: analyze-and-test
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Build iOS (unsigned)
+        run: flutter build ios --release --no-codesign
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ios-unsigned
+          path: build/ios/iphoneos/
+
+  # ==========================================
+  # ビルドサマリー
+  # ==========================================
+  build-summary:
+    name: Build Summary
+    needs: [build-android, build-ios]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Check build status
+        run: |
+          echo "## Build Summary"
+          echo ""
+          echo "| Component | Status |"
+          echo "|-----------|--------|"
+          echo "| Android APK | ${{ needs.build-android.result == 'success' && '✅' || '❌' }} |"
+          echo "| Android AAB | ${{ needs.build-android.result == 'success' && '✅' || '❌' }} |"
+          echo "| iOS | ${{ needs.build-ios.result == 'success' && '✅' || '❌' }} |"
+
+      - name: Fail if any build failed
+        if: |
+          needs.build-android.result == 'failure' ||
+          needs.build-ios.result == 'failure'
+        run: exit 1
+
+  # ==========================================
+  # デプロイ（オプション）
+  # ==========================================
+  deploy:
+    name: Deploy to App Store / Play Store
+    needs: [build-android, build-ios]
+    runs-on: ubuntu-latest
+    if: github.ref_type == 'tag'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy Android (Google Play)
+        run: |
+          # カスタマイズ: Google Play Console へのアップロード
+          echo "Deploying to Google Play..."
+          # fastlane supply --aab build/app/outputs/bundle/release/app.aab
+
+      - name: Deploy iOS (TestFlight)
+        run: |
+          # カスタマイズ: TestFlight へのアップロード
+          echo "Deploying to TestFlight..."
+          # fastlane pilot upload --ipa build/ios/iphoneos/...
