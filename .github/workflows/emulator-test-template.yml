@@ -8,11 +8,17 @@
 
 name: Emulator Test
 
+# NOTE: これは「テンプレート」です。手動実行のみに固定しています。
+# モノレポ(yourwish)のルートには pubspec.yaml が無いため、ここで自動起動すると
+# flutter pub get が "Expected to find project root" で失敗します。
+#
+# 各アプリのリポジトリへ .github/workflows/emulator-test.yml としてコピーする際に、
+# 下記のコメントアウトを解除して自動起動へ切り替えてください。
 on:
-  push:
-    branches: ['main', 'master', 'claude/**']
-  pull_request:
   workflow_dispatch:
+  # push:
+  #   branches: ['main', 'master', 'claude/**']
+  # pull_request:
 
 concurrency:
   group: emulator-${{ github.ref }}
