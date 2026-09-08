@@ -11,17 +11,15 @@
 
 name: Flutter Build & Test Template
 
+# NOTE: This is a TEMPLATE file for individual Flutter projects.
+# Do not use this directly in the monorepo root.
+# Copy and customize for individual project workflows.
+#
+# Trigger disabled to prevent unintended CI runs.
+# Each project's build-apk.yml should copy and modify this template.
+
 on:
-  push:
-    branches: ['main', 'develop', 'claude/**']
-    paths-ignore:
-      - 'docs/**'
-      - '**.md'
-  pull_request:
-    branches: ['main', 'develop']
-  workflow_dispatch:
-  schedule:
-    - cron: '0 2 * * 0'  # Weekly on Sunday 2 AM UTC
+  workflow_dispatch: # Manual trigger only
 
 env:
   FLUTTER_VERSION: '3.24.0'
