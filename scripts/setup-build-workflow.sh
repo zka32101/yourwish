@@ -118,15 +118,15 @@ print_step "SessionStart Hook を設定中..."
 
 mkdir -p .claude/hooks
 
-cat > .claude/hooks/session-start.sh << 'EOF'
+cat > .claude/hooks/session-start.sh << EOF
 #!/bin/bash
 set -euo pipefail
 
-# SessionStart Hook for $(PROJECT_NAME)
+# SessionStart Hook for ${PROJECT_NAME}
 # Automatically runs when a new Claude Code session starts
 # Sets up Flutter dependencies and runs linting/tests
 
-echo "🚀 $(PROJECT_NAME) セッション初期化開始..."
+echo "🚀 ${PROJECT_NAME} セッション初期化開始..."
 
 # 1. Flutter 依存関係をインストール
 echo "📦 Flutter 依存関係をインストール中..."
@@ -145,7 +145,7 @@ echo "✅ セッション初期化完了！"
 echo ""
 echo "📝 次のステップ:"
 echo "  1. コードを修正"
-echo "  2. /build-and-test でエミュレータテストを実行"
+echo "  2. /build-and-test ${PROJECT_NAME} でエミュレータテストを実行"
 echo ""
 EOF
 
@@ -161,9 +161,9 @@ print_step "Claude Code 設定を準備中..."
 mkdir -p .claude
 
 if [ ! -f .claude/settings.json ]; then
-    cat > .claude/settings.json << 'SETTINGS_EOF'
+    cat > .claude/settings.json << SETTINGS_EOF
 {
-  "name": "$(PROJECT_NAME)",
+  "name": "${PROJECT_NAME}",
   "description": "Flutter 教科学習アプリ - テスト自動化環境",
   "permissions": {
     "defaultMode": "bypassPermissions",
@@ -189,7 +189,7 @@ if [ ! -f .claude/settings.json ]; then
     "SessionStart": [
       {
         "type": "command",
-        "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/session-start.sh"
+        "command": ".claude/hooks/session-start.sh"
       }
     ],
     "on_build_complete": {
@@ -210,7 +210,7 @@ if [ ! -f .claude/settings.json ]; then
         "name": "build-and-test",
         "path": ".claude/skills/build-and-test",
         "description": "エミュレータ自動テスト",
-        "usage": "/build-and-test $(PROJECT_NAME)"
+        "usage": "/build-and-test ${PROJECT_NAME}"
       }
     ],
     "skills": [
