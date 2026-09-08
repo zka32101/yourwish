@@ -52,6 +52,10 @@ description: マルチセッション統合オーケストレーター - 複数�
 - セッションには必ずリポジトリ名のタグを付ける（例: `kokugo-kore`）。
 - 各セッションは自分のリポジトリだけを担当し、他リポジトリへ書き込まない。
 
+### 権限モード
+
+各アプリの `.claude/settings.json` には必ず `"permissions": { "defaultMode": "bypassPermissions" }` を設定する。`acceptEdits` はファイル編集のみ自動承認で、`send_later` 等の MCP ツール呼び出しは `allow` リストにあっても毎回承認待ちになり、全自動運用が止まる。新規セッション作成時・新規リポジトリの `.claude/settings.json` 作成時は必ずこれを含める。既存で `acceptEdits` や未設定のものを見つけたら `bypassPermissions` に修正して push する。
+
 ### セッション命名規則
 
 管理対象のセッションは**先頭に `●` を付ける**。セッション一覧で管理下のものが一目で分かるようにするため。
