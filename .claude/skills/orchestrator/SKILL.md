@@ -53,6 +53,27 @@ description: マルチセッション統合オーケストレーター - 複数�
 - セッションには必ずリポジトリ名のタグを付ける（例: `kokugo-kore`）。
 - 各セッションは自分のリポジトリだけを担当し、他リポジトリへ書き込まない。
 
+### 新規アプリ・野良セッションの発見時
+
+巡回中に管理対象外の稼働中セッション（他の親セッション経由で作られたものを含む）を見つけたら、以下を実施して管理対象に組み込む。ユーザー確認は不要（アプリの改修サイクル自体は全自動の対象のため）。
+
+1. `set_session_title` で命名規則（`● <アプリ名> (<リポジトリ名>)`）に改名
+2. `set_session_tags` で `orchestrator-managed` を追加
+3. リポジトリを `add_repo` で取得し、`.claude/settings.json` に `defaultMode: bypassPermissions` を設定（無ければ新規作成）。`build-and-test` スキルが無ければ yourwish からコピー
+4. 変更を commit & push
+5. セッションの現在の状態（BLOCKED の質問、REVIEW_READY の次アクション等）に応じて再開・継続指示を送る
+6. 同一リポジトリに対して複数セッションが重複している場合は、最も進んでいる1本を残し他は `archive_session`
+
+### 新規アプリ開発（ゼロからの立ち上げ）
+
+企画・要件だけの状態から新規リポジトリを立ち上げる場合は、最初のセッション作成時点で以下を満たす。後から手直しする一手間を無くすため。
+
+1. リポジトリ作成時に `.claude/settings.json` を `defaultMode: bypassPermissions` で作成する
+2. `.claude/skills/build-and-test` を最初から導入する
+3. セッションタイトルは命名規則（`● <アプリ名> (<リポジトリ名>)`）で作成し、`orchestrator-managed` タグを付ける
+4. CI（lint/analyze/test）と、可能なら emulator-test-template.yml ベースのエミュレータテストを早期に導入する
+5. 初期実装が一段落したら、通常の管理下アプリと同じ自動サイクル（security-review → code-review → UI改善 → テーマ統一 → 不要機能の無効化）に合流させる
+
 ### 権限モード
 
 各アプリの `.claude/settings.json` には必ず `"permissions": { "defaultMode": "bypassPermissions" }` を設定する。`acceptEdits` はファイル編集のみ自動承認で、`send_later` 等の MCP ツール呼び出しは `allow` リストにあっても毎回承認待ちになり、全自動運用が止まる。新規セッション作成時・新規リポジトリの `.claude/settings.json` 作成時は必ずこれを含める。既存で `acceptEdits` や未設定のものを見つけたら `bypassPermissions` に修正して push する。
@@ -95,8 +116,9 @@ description: マルチセッション統合オーケストレーター - 複数�
 ### 巡回手順
 
 1. `list_sessions(mine:true)` を**1回だけ**呼ぶ（同一巡回内で再取得しない）
-2. 前回巡回時の `updated_at` と比較し、**変化のないセッションはスキップ**（1日1回だけ見る）
-3. 変化のあったセッションのみ状態別に処理:
+2. **タグに `orchestrator-managed` が無い稼働中セッション（RUNNING/BLOCKED/REVIEW_READY）が無いか毎回チェックする。** 別の親セッションから起動された「野良」セッションが視界に入らず放置され続けることが実際にあった（同一アプリに対して重複セッションが並行課金され続けていた）。名前に `●` が付いていないことをスキップ条件にしない — タイトルではなくタグと状態で判断する。発見したら「新規アプリ・野良セッションの発見時」の手順で管理対象に組み込む
+3. 前回巡回時の `updated_at` と比較し、**変化のないセッションはスキップ**（1日1回だけ見る）
+4. 変化のあったセッションのみ状態別に処理:
    - **BLOCKED / need_input** → 確認リスト（上記5項目）に該当しなければ**自動で回答して再開させる**。該当する場合のみユーザーへ報告
    - **REVIEW_READY** → 次のタスクを指示
    - **COMPLETED / 24時間以上変化なし** → `archive_session`
