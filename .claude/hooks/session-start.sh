@@ -1,14 +1,14 @@
 #!/bin/bash
-set -euo pipefail
-
-# Claude Code セッション開始フック
-# Flutter SDK をローカルインストールし、テスト/リンターがそのまま使える状態にする
+# SessionStart フック: yourwish モノレポ + 小学コレシリーズ統一セットアップ自動実行
 #
 # リモート環境（Claude Code on the web）でのみ実行されます
 # 同期モードで実行（依存関係インストール完了を待ってからセッション開始）
 
-# リモート環境のみ実行
+set -euo pipefail
+
+# リモートセッション確認
 if [ "${CLAUDE_CODE_REMOTE:-}" != "true" ]; then
+  echo "ℹ️  ローカルセッションです - セットアップをスキップ"
   exit 0
 fi
 
@@ -63,3 +63,17 @@ echo -e "${BLUE}📌 Quick commands:${NC}"
 echo "  cd apps/<app_name> && flutter analyze"
 echo "  cd apps/<app_name> && flutter test"
 echo "  cd apps/<app_name> && flutter build apk --release"
+
+# 4. 小学コレシリーズ（別リポジトリ群）統一セットアップ（存在する場合のみ）
+if [ -f "setup-all-shogaku-kore-apps.sh" ]; then
+  echo ""
+  echo "🎓 小学コレシリーズ統一セットアップを実行中..."
+  if echo "y" | bash setup-all-shogaku-kore-apps.sh 2>&1; then
+    echo "✅ 小学コレシリーズ統一セットアップ完了"
+  else
+    echo -e "${YELLOW}⚠️  小学コレシリーズ統一セットアップでエラーが発生しました${NC}"
+    echo "   手動で以下を実行してください: bash setup-all-shogaku-kore-apps.sh"
+  fi
+fi
+
+echo -e "${GREEN}✅ SessionStart フック完了${NC}"

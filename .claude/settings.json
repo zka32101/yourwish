@@ -1,7 +1,26 @@
 {
   "name": "yourwish - Claude Code Docker Setup",
   "description": "SNS配信ゲーム・パズルゲーム開発用モノレポ（Docker永続化・リソース最適化対応）",
-
+  "permissions": {
+    "defaultMode": "bypassPermissions",
+    "allow": [
+      "Read",
+      "Write",
+      "Edit",
+      "Bash",
+      "Glob",
+      "Grep",
+      "Artifact",
+      "Agent",
+      "Workflow",
+      "SendMessage",
+      "mcp__Claude_Code_Remote__*",
+      "mcp__github__*",
+      "mcp__Gmail__*",
+      "mcp__Google_Drive__*",
+      "*"
+    ]
+  },
   "hooks": {
     "SessionStart": [
       {
@@ -13,9 +32,13 @@
       "description": "セッション開始時に Docker セットアップを自動実行",
       "script": ".claude/hooks/on-session-start.sh",
       "runImmediately": true
+    },
+    "on_build_complete": {
+      "description": "ビルド完了後の自動テスト実行",
+      "script": ".claude/hooks/on-build-complete.sh",
+      "trigger": "post-build"
     }
   },
-
   "docs": {
     "primary": "CLAUDE.md",
     "additional": [
@@ -26,7 +49,6 @@
     ],
     "sessionStart": ".claude/SessionStart.md"
   },
-
   "recommendations": {
     "docker": {
       "enabled": true,
@@ -52,16 +74,19 @@
         "name": "session-start-hook",
         "description": "セッション開始フック（自動初期化）",
         "location": ".claude/hooks/on-session-start.sh"
+      },
+      {
+        "name": "build-and-test",
+        "description": "ビルド完了後の自動エミュレータテスト（起動・連携・購入・認証・広告）",
+        "location": ".claude/skills/build-and-test/SKILL.md"
       }
     ]
   },
-
   "environment": {
     "NODE_VERSION": "20",
     "SUPPORTS_DOCKER": true,
     "AUTO_SETUP": true
   },
-
   "paths": {
     "scripts": "scripts/",
     "apps": "apps/",
