@@ -9,6 +9,7 @@ build/
 
 # Docker & Claude Code 永続化
 claude-home/
+.claude/settings.local.json
 npm-cache/
 .env
 .env.local
