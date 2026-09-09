@@ -100,8 +100,18 @@ description: マルチセッション統合オーケストレーター - 複数�
 4. 見た目・操作性の改善、テーマ・デザインの統一
 5. 不要機能・デッドコードの無効化
 6. エミュレータテスト（GitHub Actions）で6観点検証
-7. PR 作成 → CI green → auto-merge
-8. 次の改善項目へ
+7. fastlane によるリリース自動化（導入済みアプリのみ）
+   - Android: `fastlane supply` で internal/alpha/beta トラックへの自動アップロードは対象（審査不要のため自動化してよい）
+   - iOS: `fastlane pilot` で TestFlight への自動アップロードは対象
+   - **本番トラックへの昇格・公開ボタン、App Store の審査提出（`fastlane deliver`）はユーザー確認必須のリストに該当するため自動実行しない**
+   - 署名鍵・サービスアカウント鍵は GitHub Secrets 登録が必要（ユーザー作業）。未登録の場合はコード実装のみ進め、Secrets登録待ちとして報告
+8. PR 作成 → CI green → auto-merge
+9. 次の改善項目へ
+
+### fastlane 導入（試験導入中）
+
+- 2026-09-09: 国語コレ (kokugo-kore) で試験導入開始。Fastfile/Appfile を追加し、internal track への自動アップロードまで通す
+- 動作確認できたら共通ワークフロー化し、他アプリへ展開する
 
 ## 巡回（監視）ルール
 
