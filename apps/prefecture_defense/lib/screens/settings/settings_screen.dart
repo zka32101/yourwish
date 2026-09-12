@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_core/shared_core.dart'
+    show RetentionDashboard;
 import 'package:prefecture_defense/config/app_config.dart';
 import 'package:prefecture_defense/config/constants.dart';
 import 'package:prefecture_defense/providers/auth_provider.dart';
@@ -100,6 +103,22 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   });
                   AudioService().setSfxEnabled(value);
                 },
+              ),
+            ],
+          ),
+          // Analytics
+          _buildSection(
+            title: '分析',
+            children: [
+              _buildSettingTile(
+                icon: Icons.analytics_outlined,
+                title: 'ユーザーリテンション分析',
+                subtitle: 'あなたのプレイパターンと継続性を分析',
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const RetentionDashboard(),
+                  ),
+                ),
               ),
             ],
           ),
