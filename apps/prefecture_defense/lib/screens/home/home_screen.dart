@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_core/shared_core.dart' show WeeklyBonusWidget, coinProvider;
 import 'package:prefecture_defense/config/constants.dart';
 import 'package:prefecture_defense/models/achievement_model.dart';
 import 'package:prefecture_defense/providers/auth_provider.dart';
@@ -136,6 +137,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       _buildDeployButton(),
                       const SizedBox(height: AppSpacing.lg),
                       _buildStatsRow(),
+                      const SizedBox(height: AppSpacing.lg),
+                      WeeklyBonusWidget(
+                        onBonusClaimed: (coins) {
+                          ref.read(coinProvider.notifier).addCoins(coins);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('ボーナス $coins コイン獲得しました！🎉'),
+                              backgroundColor: Colors.green,
+                              duration: const Duration(seconds: 2),
+                            ),
+                          );
+                        },
+                      ),
                       const SizedBox(height: AppSpacing.lg),
                       _buildContinueSection(),
                       const SizedBox(height: AppSpacing.lg),
