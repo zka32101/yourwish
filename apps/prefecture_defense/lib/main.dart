@@ -15,6 +15,7 @@ import 'package:prefecture_defense/screens/ranking/ranking_screen.dart';
 import 'package:prefecture_defense/screens/settings/settings_screen.dart';
 import 'package:prefecture_defense/screens/territory/territory_screen.dart';
 import 'package:prefecture_defense/screens/hq/hq_upgrade_screen.dart';
+import 'package:prefecture_defense/services/cloud_functions_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -38,6 +39,10 @@ void main() async {
   } on FirebaseException catch (e) {
     if (e.code != 'duplicate-app') rethrow;
   }
+
+  // Phase 4.23: Cloud Functions サービス初期化
+  final cloudFunctionsService = CloudFunctionsService();
+  debugPrint('Cloud Functions Service initialized');
 
   runApp(
     const ProviderScope(
