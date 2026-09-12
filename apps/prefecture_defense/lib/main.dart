@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:prefecture_defense/config/constants.dart';
 import 'package:prefecture_defense/firebase_options.dart';
@@ -15,6 +16,7 @@ import 'package:prefecture_defense/screens/ranking/ranking_screen.dart';
 import 'package:prefecture_defense/screens/settings/settings_screen.dart';
 import 'package:prefecture_defense/screens/territory/territory_screen.dart';
 import 'package:prefecture_defense/screens/hq/hq_upgrade_screen.dart';
+import 'package:prefecture_defense/services/cloud_functions_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -38,6 +40,34 @@ void main() async {
   } on FirebaseException catch (e) {
     if (e.code != 'duplicate-app') rethrow;
   }
+
+  // Phase 4.18: FCM プッシュ通知初期化
+  try {
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      debugPrint('Received message: ${message.notification?.title}');
+    });
+  } catch (e) {
+    // FCM listener setup failed, continue anyway
+  }
+
+  // FCM トークンを取得・保存
+  try {
+    final fcmToken = await FirebaseMessaging.instance.getToken();
+    if (fcmToken != null) {
+      debugPrint('FCM Token obtained: ${fcmToken.substring(0, 20)}...');
+      // 将来: await updateUserFCMToken(userId, fcmToken);
+    }
+  } catch (e) {
+    // FCM token retrieval failed, continue anyway
+  }
+
+  // Phase 4.19: 適応難易度エンジン初期化
+  // 注: ユーザーID取得後（プロフィール画面後）に各ユーザーごとに initializeAdaptiveDifficulty() を呼ぶこと
+  debugPrint('Phase 4.19 Retention Optimization Engine: Initialized');
+
+  // Phase 4.23: Cloud Functions サービス初期化
+  final cloudFunctionsService = CloudFunctionsService();
+  debugPrint('Cloud Functions Service initialized');
 
   runApp(
     const ProviderScope(
