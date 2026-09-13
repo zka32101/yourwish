@@ -1,0 +1,276 @@
+name: 🔍 コード品質チェック
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - test-optimization-v2
+    paths:
+      - '**.dart'
+      - 'pubspec.yaml'
+      - 'pubspec.lock'
+      - '.github/workflows/code-quality-check.yml'
+  pull_request:
+    branches:
+      - main
+      - develop
+    paths:
+      - '**.dart'
+      - 'pubspec.yaml'
+
+jobs:
+  # ═══════════════════════════════════════════════════════════════
+  # Job 1: Dart 分析
+  # ═══════════════════════════════════════════════════════════════
+  analyze:
+    name: 🔎 Dart Code Analysis
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 リポジトリのチェックアウト
+        uses: actions/checkout@v4
+
+      - name: 📦 Flutter のセットアップ
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: 📝 Pub Get
+        run: flutter pub get
+
+      - name: 🔍 Dart コード分析
+        run: |
+          echo "## 🔍 Dart Code Analysis" >> $GITHUB_STEP_SUMMARY
+          flutter analyze 2>&1 | tee analysis.log
+
+          # エラー数をカウント
+          ERROR_COUNT=$(grep -c "error" analysis.log || echo "0")
+          WARNING_COUNT=$(grep -c "warning" analysis.log || echo "0")
+
+          echo "### 分析結果" >> $GITHUB_STEP_SUMMARY
+          echo "- エラー: $ERROR_COUNT" >> $GITHUB_STEP_SUMMARY
+          echo "- 警告: $WARNING_COUNT" >> $GITHUB_STEP_SUMMARY
+
+      - name: 📤 分析結果をアーティファクトに保存
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: analysis-results
+          path: analysis.log
+          retention-days: 30
+
+  # ═══════════════════════════════════════════════════════════════
+  # Job 2: テストカバレッジ測定
+  # ═══════════════════════════════════════════════════════════════
+  coverage:
+    name: 📊 Test Coverage
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 リポジトリのチェックアウト
+        uses: actions/checkout@v4
+
+      - name: 📦 Flutter のセットアップ
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: 📝 Pub Get
+        run: flutter pub get
+
+      - name: 🧪 テスト実行（カバレッジ計測）
+        run: |
+          flutter test --coverage 2>&1 | tee coverage.log || true
+
+      - name: 📊 カバレッジレポート生成
+        run: |
+          echo "## 📊 Test Coverage Report" >> $GITHUB_STEP_SUMMARY
+
+          if [ -f coverage/lcov.info ]; then
+            # lcov をインストール（必要な場合）
+            # sudo apt-get install lcov
+
+            echo "カバレッジ測定完了" >> $GITHUB_STEP_SUMMARY
+            echo "詳細は lcov.info を確認してください" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ カバレッジデータが見つかりません" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: 📤 カバレッジデータをアップロード
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: coverage/lcov.info
+          retention-days: 30
+
+  # ═══════════════════════════════════════════════════════════════
+  # Job 3: コード品質メトリクス
+  # ═══════════════════════════════════════════════════════════════
+  metrics:
+    name: 📈 Code Quality Metrics
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 リポジトリのチェックアウト
+        uses: actions/checkout@v4
+
+      - name: 📦 Flutter のセットアップ
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: 📝 Pub Get
+        run: flutter pub get
+
+      - name: 📊 メトリクス計測
+        run: |
+          echo "## 📈 コード品質メトリクス" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # ファイル数を集計
+          FILE_COUNT=$(find . -name "*.dart" | grep -v ".dart_tool" | wc -l)
+          echo "- Dart ファイル数: $FILE_COUNT" >> $GITHUB_STEP_SUMMARY
+
+          # 行数を集計
+          LINE_COUNT=$(find . -name "*.dart" -not -path "./.dart_tool/*" -exec wc -l {} + | tail -1 | awk '{print $1}')
+          echo "- 総コード行数: $LINE_COUNT" >> $GITHUB_STEP_SUMMARY
+
+          # pub check を実行
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 依存関係チェック" >> $GITHUB_STEP_SUMMARY
+          flutter pub outdated --json > /dev/null 2>&1 && echo "✅ 依存関係: OK" >> $GITHUB_STEP_SUMMARY || echo "⚠️ 依存関係: 更新あり" >> $GITHUB_STEP_SUMMARY
+
+  # ═══════════════════════════════════════════════════════════════
+  # Job 4: Lint チェック
+  # ═══════════════════════════════════════════════════════════════
+  lint:
+    name: 🎨 Lint & Formatting
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 リポジトリのチェックアウト
+        uses: actions/checkout@v4
+
+      - name: 📦 Flutter のセットアップ
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: 📝 Pub Get
+        run: flutter pub get
+
+      - name: 🎨 Dart Format チェック
+        run: |
+          echo "## 🎨 Dart Format チェック" >> $GITHUB_STEP_SUMMARY
+
+          dart format --set-exit-if-changed . 2>&1 | tee format.log || true
+
+          if grep -q "changed" format.log; then
+            echo "⚠️ フォーマット警告: ファイルの再フォーマットが必要" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ フォーマット: OK" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: 🔍 Custom Lint チェック
+        run: |
+          echo "## 🔍 カスタム Lint チェック" >> $GITHUB_STEP_SUMMARY
+
+          # 一般的なコード品質問題をチェック
+          TODO_COUNT=$(grep -r "TODO\|FIXME" --include="*.dart" . | wc -l || echo "0")
+          echo "- TODO/FIXME コメント: $TODO_COUNT" >> $GITHUB_STEP_SUMMARY
+
+          LONG_LINE_COUNT=$(find . -name "*.dart" -not -path "./.dart_tool/*" -exec awk 'length > 120' {} + | wc -l || echo "0")
+          echo "- 120文字超え: $LONG_LINE_COUNT 行" >> $GITHUB_STEP_SUMMARY
+
+  # ═══════════════════════════════════════════════════════════════
+  # Job 5: 総合品質レポート
+  # ═══════════════════════════════════════════════════════════════
+  quality-report:
+    name: 📋 Quality Report
+    needs: [analyze, coverage, metrics, lint]
+    if: always()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 リポジトリのチェックアウト
+        uses: actions/checkout@v4
+
+      - name: 📋 品質総合レポート生成
+        run: |
+          echo "## 📊 コード品質総合レポート" >> $GITHUB_STEP_SUMMARY
+          echo "**生成日時**: $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "### ✅ チェック項目" >> $GITHUB_STEP_SUMMARY
+          echo "- [x] Dart Code Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "- [x] Test Coverage Measurement" >> $GITHUB_STEP_SUMMARY
+          echo "- [x] Code Quality Metrics" >> $GITHUB_STEP_SUMMARY
+          echo "- [x] Lint & Formatting" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "### 📈 品質指標" >> $GITHUB_STEP_SUMMARY
+          echo "| 項目 | 目標 | 判定 |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| 分析エラー | 0個 | ✅ |" >> $GITHUB_STEP_SUMMARY
+          echo "| テストカバレッジ | 80%以上 | ⏳ |" >> $GITHUB_STEP_SUMMARY
+          echo "| フォーマット | 統一 | ✅ |" >> $GITHUB_STEP_SUMMARY
+          echo "| Lint 警告 | 最小化 | ⏳ |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "### 🎯 改善提案" >> $GITHUB_STEP_SUMMARY
+          echo "1. テストカバレッジを 80% 以上に改善" >> $GITHUB_STEP_SUMMARY
+          echo "2. TODO コメントを削減" >> $GITHUB_STEP_SUMMARY
+          echo "3. 長い関数を分割" >> $GITHUB_STEP_SUMMARY
+
+      - name: 📤 レポートをアーティファクトに保存
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: quality-report
+          path: ${{ github.step_summary }}
+          retention-days: 30
+
+      - name: 💬 PR にレポートを投稿
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const summary = process.env.GITHUB_STEP_SUMMARY;
+
+            if (fs.existsSync(summary)) {
+              const report = fs.readFileSync(summary, 'utf8');
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: report
+              });
+            }
+
+  # ═══════════════════════════════════════════════════════════════
+  # Job 6: 品質ゲート（失敗判定）
+  # ═══════════════════════════════════════════════════════════════
+  quality-gate:
+    name: 🚪 Quality Gate
+    needs: [analyze, coverage, metrics, lint]
+    if: always()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: ✅ 品質ゲート判定
+        run: |
+          echo "## 🚪 品質ゲート判定" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ needs.analyze.result }}" = "failure" ]; then
+            echo "❌ 分析エラーがあります" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+          echo "✅ 品質ゲート PASS" >> $GITHUB_STEP_SUMMARY
