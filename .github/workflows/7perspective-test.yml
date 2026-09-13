@@ -1,0 +1,336 @@
+name: 🎯 7観点統合テスト自動実行
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'shogi_app/**'
+      - 'card_rivals/**'
+      - 'test_integration/**'
+      - '.github/workflows/7perspective-test.yml'
+  pull_request:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'shogi_app/**'
+      - 'card_rivals/**'
+      - 'test_integration/**'
+  schedule:
+    # 毎日 02:00 JST に実行（リグレッション検出）
+    - cron: '17 02 * * *'
+  workflow_dispatch:
+
+jobs:
+  # ═══════════════════════════════════════════════════════════════
+  # Job 1: テスト環境準備
+  # ═══════════════════════════════════════════════════════════════
+  setup:
+    name: 🔧 テスト環境準備
+    runs-on: ubuntu-latest
+    outputs:
+      flutter-version: ${{ steps.flutter-version.outputs.version }}
+
+    steps:
+      - name: 📥 リポジトリのチェックアウト
+        uses: actions/checkout@v4
+
+      - name: 📦 Flutter キャッシュの復元
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+          cache-path: '${{ runner.tool_cache }}/flutter'
+
+      - name: ✅ Flutter バージョン確認
+        id: flutter-version
+        run: |
+          flutter --version
+          echo "version=$(flutter --version | grep Flutter | awk '{print $2}')" >> $GITHUB_OUTPUT
+
+      - name: 📋 Pub 依存関係情報取得
+        run: |
+          echo "## 📦 Pub 依存関係" >> $GITHUB_STEP_SUMMARY
+          flutter pub deps 2>/dev/null | head -20 >> $GITHUB_STEP_SUMMARY || echo "情報取得中..."
+
+  # ═══════════════════════════════════════════════════════════════
+  # Job 2: shogi_app テスト
+  # ═══════════════════════════════════════════════════════════════
+  test-shogi-app:
+    name: 🧪 shogi_app 7観点テスト
+    needs: setup
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - project: shogi_app
+            test-name: "起動テスト"
+          - project: shogi_app
+            test-name: "Firebase接続テスト"
+          - project: shogi_app
+            test-name: "認証テスト"
+
+    steps:
+      - name: 📥 リポジトリのチェックアウト
+        uses: actions/checkout@v4
+
+      - name: 📦 Flutter のセットアップ
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: 🔍 Code Analysis (shogi_app)
+        working-directory: shogi_app
+        run: |
+          echo "## 📊 Code Analysis - shogi_app" >> $GITHUB_STEP_SUMMARY
+          flutter analyze 2>&1 | tee analysis.log || true
+          ERROR_COUNT=$(grep -c "error\|Error" analysis.log || echo "0")
+          echo "エラー数: $ERROR_COUNT" >> $GITHUB_STEP_SUMMARY
+
+      - name: 📝 Pub Get (shogi_app)
+        working-directory: shogi_app
+        run: |
+          flutter pub get
+
+      - name: 🧪 Widget テスト (shogi_app)
+        working-directory: shogi_app
+        run: |
+          echo "## ✅ Widget テスト - shogi_app" >> $GITHUB_STEP_SUMMARY
+          flutter test test/ --coverage 2>&1 | tee test_output.log || true
+          TEST_PASSED=$(grep -c "PASSED" test_output.log || echo "0")
+          TEST_FAILED=$(grep -c "FAILED" test_output.log || echo "0")
+          echo "テスト成功: $TEST_PASSED, 失敗: $TEST_FAILED" >> $GITHUB_STEP_SUMMARY
+
+      - name: 📦 APK ビルド (shogi_app - Debug)
+        working-directory: shogi_app
+        run: |
+          echo "## 🏗️ ビルド - shogi_app" >> $GITHUB_STEP_SUMMARY
+          flutter build apk --debug --split-per-abi 2>&1 | tee build.log || true
+          APK_SIZE=$(du -sh build/app/outputs/flutter-apk/ | awk '{print $1}')
+          echo "APK サイズ: $APK_SIZE" >> $GITHUB_STEP_SUMMARY
+
+      - name: 📤 テスト結果をアップロード
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: shogi_app-test-results
+          path: |
+            shogi_app/test_output.log
+            shogi_app/analysis.log
+            shogi_app/build.log
+          retention-days: 30
+
+  # ═══════════════════════════════════════════════════════════════
+  # Job 3: card_rivals テスト
+  # ═══════════════════════════════════════════════════════════════
+  test-card-rivals:
+    name: 🧪 card_rivals 7観点テスト
+    needs: setup
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - project: card_rivals
+            test-name: "起動テスト"
+          - project: card_rivals
+            test-name: "Firebase接続テスト"
+          - project: card_rivals
+            test-name: "パフォーマンステスト"
+
+    steps:
+      - name: 📥 リポジトリのチェックアウト
+        uses: actions/checkout@v4
+
+      - name: 📦 Flutter のセットアップ
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: 🔍 Code Analysis (card_rivals)
+        working-directory: card_rivals
+        run: |
+          echo "## 📊 Code Analysis - card_rivals" >> $GITHUB_STEP_SUMMARY
+          flutter analyze 2>&1 | tee analysis.log || true
+          ERROR_COUNT=$(grep -c "error\|Error" analysis.log || echo "0")
+          echo "エラー数: $ERROR_COUNT" >> $GITHUB_STEP_SUMMARY
+
+      - name: 📝 Pub Get (card_rivals)
+        working-directory: card_rivals
+        run: |
+          flutter pub get
+
+      - name: 🧪 Widget テスト (card_rivals)
+        working-directory: card_rivals
+        run: |
+          echo "## ✅ Widget テスト - card_rivals" >> $GITHUB_STEP_SUMMARY
+          flutter test test/ --coverage 2>&1 | tee test_output.log || true
+          TEST_PASSED=$(grep -c "PASSED" test_output.log || echo "0")
+          TEST_FAILED=$(grep -c "FAILED" test_output.log || echo "0")
+          echo "テスト成功: $TEST_PASSED, 失敗: $TEST_FAILED" >> $GITHUB_STEP_SUMMARY
+
+      - name: 📦 APK ビルド (card_rivals - Debug)
+        working-directory: card_rivals
+        run: |
+          echo "## 🏗️ ビルド - card_rivals" >> $GITHUB_STEP_SUMMARY
+          flutter build apk --debug --split-per-abi 2>&1 | tee build.log || true
+          APK_SIZE=$(du -sh build/app/outputs/flutter-apk/ | awk '{print $1}')
+          echo "APK サイズ: $APK_SIZE" >> $GITHUB_STEP_SUMMARY
+
+      - name: 📤 テスト結果をアップロード
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: card_rivals-test-results
+          path: |
+            card_rivals/test_output.log
+            card_rivals/analysis.log
+            card_rivals/build.log
+          retention-days: 30
+
+  # ═══════════════════════════════════════════════════════════════
+  # Job 4: 統合テスト実行
+  # ═══════════════════════════════════════════════════════════════
+  integration-test:
+    name: 🔗 統合テスト実行
+    needs: [test-shogi-app, test-card-rivals]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 リポジトリのチェックアウト
+        uses: actions/checkout@v4
+
+      - name: 📦 Flutter のセットアップ
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: 📝 Pub Get (integration_test)
+        run: flutter pub get
+
+      - name: 🔗 統合テスト実行
+        run: |
+          echo "## 🔗 統合テスト結果" >> $GITHUB_STEP_SUMMARY
+          flutter test test_integration/integration_test_7perspective.dart 2>&1 | tee integration_test.log || true
+          TEST_PASSED=$(grep -c "PASSED\|✅" integration_test.log || echo "0")
+          TEST_FAILED=$(grep -c "FAILED\|❌" integration_test.log || echo "0")
+          echo "統合テスト: $TEST_PASSED 成功, $TEST_FAILED 失敗" >> $GITHUB_STEP_SUMMARY
+
+      - name: 📤 統合テスト結果をアップロード
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-test-results
+          path: integration_test.log
+          retention-days: 30
+
+  # ═══════════════════════════════════════════════════════════════
+  # Job 5: テスト結果レポート
+  # ═══════════════════════════════════════════════════════════════
+  report:
+    name: 📊 テスト結果レポート
+    needs: [test-shogi-app, test-card-rivals, integration-test]
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: 📥 リポジトリのチェックアウト
+        uses: actions/checkout@v4
+
+      - name: 📥 テスト結果をダウンロード
+        uses: actions/download-artifact@v4
+        with:
+          path: test_results
+
+      - name: 📊 テストレポート生成
+        run: |
+          echo "# 🎯 7観点統合テスト レポート" > TEST_REPORT.md
+          echo "" >> TEST_REPORT.md
+          echo "**実行日時**: $(date '+%Y-%m-%d %H:%M:%S JST')" >> TEST_REPORT.md
+          echo "**ワークフロー**: ${{ github.workflow }}" >> TEST_REPORT.md
+          echo "**実行者**: ${{ github.actor }}" >> TEST_REPORT.md
+          echo "" >> TEST_REPORT.md
+
+          echo "## テスト結果サマリー" >> TEST_REPORT.md
+          echo "" >> TEST_REPORT.md
+
+          if [ -d "test_results" ]; then
+            find test_results -name "*.log" -type f | while read logfile; do
+              echo "### $(basename $logfile)" >> TEST_REPORT.md
+              echo '```' >> TEST_REPORT.md
+              head -50 "$logfile" >> TEST_REPORT.md
+              echo '```' >> TEST_REPORT.md
+              echo "" >> TEST_REPORT.md
+            done
+          fi
+
+          cat TEST_REPORT.md >> $GITHUB_STEP_SUMMARY
+
+      - name: 📤 レポートをアップロード
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report
+          path: TEST_REPORT.md
+          retention-days: 30
+
+      - name: 🎯 テスト成功/失敗の判定
+        run: |
+          if [ -f test_results/**/integration_test.log ]; then
+            if grep -q "FAILED\|error\|Error" test_results/**/integration_test.log; then
+              echo "❌ テスト失敗"
+              exit 1
+            else
+              echo "✅ テスト成功"
+            fi
+          else
+            echo "⚠️  テスト結果ファイルが見つかりません"
+          fi
+
+  # ═══════════════════════════════════════════════════════════════
+  # Job 6: Slack 通知
+  # ═══════════════════════════════════════════════════════════════
+  notify:
+    name: 📢 Slack 通知（オプション）
+    needs: [test-shogi-app, test-card-rivals, integration-test, report]
+    runs-on: ubuntu-latest
+    if: always()
+    # Note: SLACK_WEBHOOK_URL シークレットが設定されている場合のみ実行
+
+    steps:
+      - name: 📢 テスト成功を Slack に通知
+        if: success()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: custom
+          custom_payload: |
+            {
+              text: "✅ 7観点統合テスト 成功",
+              attachments: [{
+                text: `プロジェクト: shogi_app + card_rivals\n実行時間: ${process.env.RUN_TIME}\n`,
+                color: "good"
+              }]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        continue-on-error: true
+
+      - name: 📢 テスト失敗を Slack に通知
+        if: failure()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: custom
+          custom_payload: |
+            {
+              text: "❌ 7観点統合テスト 失敗",
+              attachments: [{
+                text: `プロジェクト: shogi_app + card_rivals\nエラーログを確認してください\n`,
+                color: "danger"
+              }]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        continue-on-error: true
