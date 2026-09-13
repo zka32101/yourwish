@@ -1,6 +1,6 @@
 # yourwish Monorepo
 
-<!-- Build trigger for shared_core APK integration - 2026-09-13 -->
+<!-- Build trigger for shared_core APK integration - 2026-09-13 10:30 -->
 
 yourwish の各アプリをまとめて管理するモノレポです。
 トップ（リポジトリルート）が全体を束ね、`apps/` 配下に各アプリ・
