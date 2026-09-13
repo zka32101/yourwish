@@ -1,0 +1,28 @@
+{
+    "timestamp":  "2026-09-13T12:14:26Z",
+    "metrics":  {
+                    "card_rivals":  {
+                                        "cpu_usage_percent":  26,
+                                        "screen_load_time_ms":  1800,
+                                        "startup_time_ms":  2800,
+                                        "memory_increase_mb":  45,
+                                        "battery_consumption_percent_per_min":  4.5
+                                    },
+                    "shogi_app":  {
+                                      "cpu_usage_percent":  28,
+                                      "screen_load_time_ms":  1950,
+                                      "startup_time_ms":  3200,
+                                      "memory_increase_mb":  48,
+                                      "battery_consumption_percent_per_min":  4.8
+                                  }
+                },
+    "tests":  {
+                  "launch":  100,
+                  "billing":  75,
+                  "firebase":  98,
+                  "ads":  80,
+                  "performance":  95,
+                  "crash":  100,
+                  "auth":  85
+              }
+}
