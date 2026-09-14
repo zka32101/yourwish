@@ -355,6 +355,10 @@ jobs:
           echo "=== system gradle (fallback candidate) ==="
           which gradle && gradle --version 2>&1 | head -12 || echo "no system gradle on PATH"
 
+      - name: Generate code with build_runner
+        working-directory: apps/${{ matrix.app }}
+        run: flutter pub run build_runner build --delete-conflicting-outputs
+
       - name: Build Android App Bundle
         working-directory: apps/${{ matrix.app }}
         run: flutter build appbundle --release
