@@ -4,6 +4,9 @@ import * as functions from "firebase-functions";
 admin.initializeApp();
 const db = admin.firestore();
 
+const VALID_DIFFICULTIES = ["easy", "normal", "hard", "expert"] as const;
+const VALID_PREFECTURES = /^[0-9]{2}$/; // 01-47
+
 // ─── ランキング登録 ──────────────────────────────────────────────────────
 // クライアントから呼び出し: score, prefectureCode, difficulty, playerName
 
@@ -17,6 +20,21 @@ export const submitScore = functions
 
     if (typeof score !== "number" || score < 0) {
       throw new functions.https.HttpsError("invalid-argument", "スコアが不正です");
+    }
+
+    // prefectureCode 検証
+    if (typeof prefectureCode !== "string" || !VALID_PREFECTURES.test(prefectureCode)) {
+      throw new functions.https.HttpsError("invalid-argument", "都道府県コードが不正です");
+    }
+
+    // difficulty 検証
+    if (!VALID_DIFFICULTIES.includes(difficulty)) {
+      throw new functions.https.HttpsError("invalid-argument", "難易度が不正です");
+    }
+
+    // playerName 検証
+    if (typeof playerName !== "string" || playerName.length > 50) {
+      throw new functions.https.HttpsError("invalid-argument", "プレイヤー名が不正です");
     }
 
     const entryRef = db
@@ -69,13 +87,16 @@ export const getRanking = functions
       .limit(20)
       .get();
 
-    const entries = snapshot.docs.map((doc, i) => ({
-      rank: i + 1,
-      playerName: doc.data().playerName,
-      score: doc.data().score,
-      difficulty: doc.data().difficulty,
-      uid: doc.data().uid,
-    }));
+    const entries = snapshot.docs.map((doc, i) => {
+      const data = doc.data();
+      return {
+        rank: i + 1,
+        playerName: data.playerName ?? "不明",
+        score: data.score ?? 0,
+        difficulty: data.difficulty ?? "normal",
+        uid: data.uid ?? "",
+      };
+    });
 
     return { entries };
   });
@@ -127,7 +148,7 @@ export const claimDailyBonus = functions
     const doc = await bonusRef.get();
 
     const now = admin.firestore.Timestamp.now();
-    const todayStr = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+    const todayStr = _getJSTDateStr(); // JST で日付を取得
 
     if (doc.exists) {
       const lastClaim: string = doc.data()?.lastClaimDate ?? "";
@@ -160,6 +181,12 @@ export const claimDailyBonus = functions
   });
 
 // ─── ヘルパー ────────────────────────────────────────────────────────────
+
+function _getJSTDateStr(): string {
+  const now = new Date();
+  const jstTime = new Date(now.getTime() + 9 * 60 * 60 * 1000); // UTC+9
+  return jstTime.toISOString().slice(0, 10); // YYYY-MM-DD
+}
 
 function _calcStreak(lastDate: string, currentStreak: number): number {
   if (!lastDate) return 1;
