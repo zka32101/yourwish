@@ -1,0 +1,20 @@
+name: Emulator Test (vote_survivor)
+
+on:
+  push:
+    branches: [master, main]
+    paths:
+      - 'apps/vote_survivor/**'
+      - 'packages/game_kit/**'
+  pull_request:
+    paths:
+      - 'apps/vote_survivor/**'
+      - 'packages/game_kit/**'
+  workflow_dispatch:
+
+jobs:
+  emulator-test:
+    uses: ./.github/workflows/android-emulator-test.yml
+    with:
+      app-path: apps/vote_survivor
+      test-command: flutter test

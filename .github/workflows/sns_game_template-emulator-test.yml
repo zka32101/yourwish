@@ -1,0 +1,20 @@
+name: Emulator Test (sns_game_template)
+
+on:
+  push:
+    branches: [master, main]
+    paths:
+      - 'apps/sns_game_template/**'
+      - 'packages/game_kit/**'
+  pull_request:
+    paths:
+      - 'apps/sns_game_template/**'
+      - 'packages/game_kit/**'
+  workflow_dispatch:
+
+jobs:
+  emulator-test:
+    uses: ./.github/workflows/android-emulator-test.yml
+    with:
+      app-path: apps/sns_game_template
+      test-command: flutter test
