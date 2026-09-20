@@ -1,6 +1,8 @@
 #!/bin/bash
-# SessionStart フック: 小学コレシリーズ統一セットアップ自動実行
-# 新規セッション立ち上げ時に、全7つアプリの環境セットアップを自動実施
+# SessionStart フック: yourwish モノレポ + 小学コレシリーズ統一セットアップ自動実行
+#
+# リモート環境（Claude Code on the web）でのみ実行されます
+# 同期モードで実行（依存関係インストール完了を待ってからセッション開始）
 
 set -euo pipefail
 
@@ -10,32 +12,68 @@ if [ "${CLAUDE_CODE_REMOTE:-}" != "true" ]; then
   exit 0
 fi
 
-# プロジェクトディレクトリ確認
-if [ -z "${CLAUDE_PROJECT_DIR:-}" ]; then
-  echo "❌ CLAUDE_PROJECT_DIR が設定されていません"
-  exit 1
-fi
+PROJECT_ROOT="${CLAUDE_PROJECT_DIR:-.}"
+cd "$PROJECT_ROOT"
 
-cd "$CLAUDE_PROJECT_DIR"
+# カラー出力
+BLUE='\033[0;34m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
 
-# セットアップスクリプト確認
-if [ ! -f "setup-all-shogaku-kore-apps.sh" ]; then
-  echo "❌ setup-all-shogaku-kore-apps.sh が見つかりません"
-  exit 1
-fi
+echo -e "${BLUE}🚀 Flutter environment setup (local, no Docker)${NC}"
 
-echo "🎓 小学コレシリーズ統一セットアップを実行中..."
-echo ""
+FLUTTER_DIR="${FLUTTER_ROOT:-$HOME/flutter}"
 
-# セットアップ実行（ユーザー入力を自動化）
-if echo "y" | bash setup-all-shogaku-kore-apps.sh 2>&1; then
-  echo ""
-  echo "✅ SessionStart フック完了"
-  exit 0
+# 1. Flutter SDK インストール（未インストールの場合のみ）
+if [ ! -x "$FLUTTER_DIR/bin/flutter" ]; then
+  echo -e "${YELLOW}→ Installing Flutter SDK (stable)...${NC}"
+  git clone --depth 1 -b stable https://github.com/flutter/flutter.git "$FLUTTER_DIR" 2>&1 | tail -5
 else
-  echo ""
-  echo "⚠️  セットアップ完了時にエラーが発生しました"
-  echo "   手動で以下を実行してください:"
-  echo "   bash setup-all-shogaku-kore-apps.sh"
-  exit 1
+  echo -e "${GREEN}✅ Flutter SDK already present${NC}"
 fi
+
+export PATH="$FLUTTER_DIR/bin:$PATH"
+
+# 次回以降のシェル/コマンドでも Flutter を使えるように永続化
+if [ -n "${CLAUDE_ENV_FILE:-}" ]; then
+  echo "export PATH=\"$FLUTTER_DIR/bin:\$PATH\"" >> "$CLAUDE_ENV_FILE"
+fi
+
+# 2. Flutter 初期設定（analytics無効化・高速化）
+flutter config --no-analytics --no-cli-animations > /dev/null 2>&1 || true
+flutter precache --no-input > /dev/null 2>&1 || true
+
+echo -e "${GREEN}✅ Flutter SDK ready: $(flutter --version | head -1)${NC}"
+
+# 3. 各アプリ/パッケージの依存関係を取得（analyze/testがすぐ動くように）
+echo -e "${BLUE}📦 Fetching dependencies for packages/apps...${NC}"
+for dir in packages/*/ apps/*/; do
+  if [ -f "${dir}pubspec.yaml" ]; then
+    name="${dir%/}"
+    if (cd "$dir" && flutter pub get > /dev/null 2>&1); then
+      echo -e "${GREEN}  ✅ ${name}${NC}"
+    else
+      echo -e "${YELLOW}  ⚠ ${name}: pub get failed (may need manual fix)${NC}"
+    fi
+  fi
+done
+
+echo -e "${BLUE}📌 Quick commands:${NC}"
+echo "  cd apps/<app_name> && flutter analyze"
+echo "  cd apps/<app_name> && flutter test"
+echo "  cd apps/<app_name> && flutter build apk --release"
+
+# 4. 小学コレシリーズ（別リポジトリ群）統一セットアップ（存在する場合のみ）
+if [ -f "setup-all-shogaku-kore-apps.sh" ]; then
+  echo ""
+  echo "🎓 小学コレシリーズ統一セットアップを実行中..."
+  if echo "y" | bash setup-all-shogaku-kore-apps.sh 2>&1; then
+    echo "✅ 小学コレシリーズ統一セットアップ完了"
+  else
+    echo -e "${YELLOW}⚠️  小学コレシリーズ統一セットアップでエラーが発生しました${NC}"
+    echo "   手動で以下を実行してください: bash setup-all-shogaku-kore-apps.sh"
+  fi
+fi
+
+echo -e "${GREEN}✅ SessionStart フック完了${NC}"

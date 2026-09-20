@@ -56,13 +56,6 @@ for repo in "${REPOS[@]}"; do
   # クローンディレクトリ
   CLONE_DIR="$TEMP_DIR/$repo"
 
-  # リポジトリ確認
-  if ! gh repo view "zka32101/$repo" > /dev/null 2>&1; then
-    echo "  ❌ Repository not found"
-    ((FAIL_COUNT++))
-    continue
-  fi
-
   # クローン
   if ! git clone "https://github.com/zka32101/$repo.git" "$CLONE_DIR" 2>/dev/null; then
     echo "  ❌ Failed to clone"
