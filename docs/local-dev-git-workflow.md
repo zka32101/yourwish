@@ -84,3 +84,58 @@
   （後から漏れに気づくのは大体手遅れ）
 - CI（自動テスト）を通さずに `main`/`master` へ直接マージしない運用に
   しておくと事故が減る
+
+## Windows ローカルビルドの一時利用フォルダ統一
+
+複数アプリをローカル(Windows)でビルドする際、TEMP/TMP・Flutter/Gradle の
+キャッシュ・ビルド成果物(APK/AAB)がそれぞれ別の場所に散らばりがちなので、
+1つの作業ルートフォルダ配下にまとめる。
+
+### 統一後の構成
+
+```
+C:\BuildWork\
+├── temp\         # Windows TEMP/TMP
+├── pub-cache\    # Flutter/Dart の PUB_CACHE
+├── gradle\       # Android の GRADLE_USER_HOME
+└── artifacts\    # ビルド済み APK/AAB の一時保管（Driveアップロード前）
+```
+
+### セットアップ手順（PowerShell、管理者権限不要）
+
+```powershell
+# ① 作業ルートと各サブフォルダを作成
+New-Item -ItemType Directory -Force -Path C:\BuildWork\temp
+New-Item -ItemType Directory -Force -Path C:\BuildWork\pub-cache
+New-Item -ItemType Directory -Force -Path C:\BuildWork\gradle
+New-Item -ItemType Directory -Force -Path C:\BuildWork\artifacts
+
+# ② 環境変数を永続化（ユーザー環境変数、setxは新しいターミナルから有効）
+setx TEMP "C:\BuildWork\temp"
+setx TMP "C:\BuildWork\temp"
+setx PUB_CACHE "C:\BuildWork\pub-cache"
+setx GRADLE_USER_HOME "C:\BuildWork\gradle"
+
+# ③ 設定後は必ずターミナル/IDEを再起動してから反映を確認
+echo $env:TEMP
+echo $env:PUB_CACHE
+echo $env:GRADLE_USER_HOME
+```
+
+### 各アプリのビルドスクリプトでの利用
+
+```powershell
+# ビルド成果物を統一フォルダにコピーしてからアップロード
+Copy-Item build\app\outputs\flutter-apk\*.apk C:\BuildWork\artifacts\
+Copy-Item build\app\outputs\bundle\release\*.aab C:\BuildWork\artifacts\
+```
+
+### 注意点
+
+- `TEMP`/`TMP` を変更すると他の一般アプリ（Office、ブラウザ等）の一時ファイルも
+  このフォルダに書かれるようになる。定期的に中身を掃除する運用にする
+- ドライブの空き容量が少ない環境では、`C:\BuildWork` を空き容量の多いドライブ
+  （例: `D:\BuildWork`）に置き換える
+- `GRADLE_USER_HOME` 変更後は初回のみ再ダウンロードが走るため、初回ビルドは時間がかかる
+- 低メモリ環境（RAM 3GB等）でのGradle設定（`-Xmx1G`、`org.gradle.daemon=false`）は
+  引き続き各アプリの `android/gradle.properties` 側で個別管理する（このフォルダ統一とは別軸）
