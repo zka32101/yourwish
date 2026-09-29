@@ -26,7 +26,9 @@ bash $S/ship.sh [dir]           # 1→2→3 を順に実行し、最初の失敗
 
 ## 環境別の使い分け
 
-方針の正本は **shared_core `docs/DEV_PLAYBOOK.md`**（役割分担・マネタイズ・セキュリティ・実機テスト観点）。
+方針の正本は **shared_core `docs/DEV_PLAYBOOK.md`**（役割分担・マネタイズ・セキュリティ）と
+**`docs/DEVICE_TEST_POLICY.md`**（実機テスト: L0〜L6 のレベル、全画面ツアー、連携マトリクス、異常系、合否基準）。
+リリース前は同ポリシーの流れ（L0/L1 → 内部テスト/TestFlight → L2〜L4 をストア配信版で → 段階公開）に従い、結果を §9 の形式で PR/Issue に残す。
 
 | 環境 | 実行するもの |
 |---|---|
