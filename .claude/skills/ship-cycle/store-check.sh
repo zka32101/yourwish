@@ -46,6 +46,43 @@ for P in $(target_packages .); do
     [ -n "$last" ] && [ "$BN" -le "$last" ] && err S4 "build 番号 $BN ≤ 既存タグの $last（「このバージョンコードは使用済み」で拒否）"
   fi
 
+  # ---- マネタイズ・広告 ----
+  KIDS=0; { [ "${KIDS_APP:-0}" = 1 ] || grep -qE "^\s+shared_core:" "$PUB" || grep -q "^name: shared_core" "$PUB"; } && KIDS=1
+  LIBS=$(find "$P/lib" -name '*.dart' 2>/dev/null)
+  if has_dep google_mobile_ads; then
+    if [ "$KIDS" = 1 ]; then
+      grep -qlE "tagForChildDirectedTreatment|tagForAgeTreatment|TagForAgeTreatment" $LIBS 2>/dev/null \
+        || err M1 "子ども向けアプリで AdMob 使用 → RequestConfiguration に子ども向けタグ(TFCD/TFAT)なし（Families ポリシー違反）"
+      grep -qlE "maxAdContentRating" $LIBS 2>/dev/null \
+        || err M1 "子ども向けアプリ → maxAdContentRating: MaxAdContentRating.g を設定"
+      has_dep firebase_analytics && [ -d "$P/ios" ] && warn M4 "Apple Kids カテゴリで出す場合、第三者広告/分析（AdMob・Firebase Analytics）は原則不可"
+    fi
+    grep -qlE "ConsentInformation|ConsentForm" $LIBS 2>/dev/null \
+      || warn M2 "UMP 同意フローなし（EEA/UK 配信で広告が出ない・ポリシー違反）"
+    grep -nE "ca-app-pub-[0-9]{16}/[0-9]{10}" $LIBS 2>/dev/null | grep -v "3940256099942544" | while IFS=: read -r f l _; do
+      grep -qE "kReleaseMode|String.fromEnvironment" "$f" || warn M3 "$f:$l 本番広告ユニットIDを直書き（--dart-define + debug はテストIDに）"
+    done
+  fi
+  if has_dep purchases_flutter; then
+    if ! grep -rqs "restorePurchases" "$P/lib"; then
+      # shared_core の共通 Paywall 経由で提供されている可能性があるため警告に留める
+      if [ "$KIDS" = 1 ]; then warn M5 "アプリ側に購入の復元導線が見当たらない（共通 Paywall 使用なら可。無ければ審査 3.1.1 リジェクト）"
+      else err M5 "購入の復元導線なし（App Store 審査 3.1.1 でリジェクト）"; fi
+    fi
+    [ "$KIDS" = 1 ] && ! grep -rqsE "ParentalGate|requireParentalGate" "$P/lib" \
+      && warn M6 "子ども向けアプリの購入導線に保護者ゲートがない可能性"
+  fi
+
+  # M7: 子ども向けアプリの外部リンクに保護者ゲート
+  if [ "$KIDS" = 1 ]; then
+    grep -rlE "CrossPromoSection\(" "$P/lib" 2>/dev/null | while read -r f; do
+      grep -q "beforeOpenStore" "$f" || warn M7 "$f: CrossPromoSection に beforeOpenStore（requireParentalGate）未指定（Apple 1.3 / Families）"
+    done
+    grep -rlE "launchUrl\(|launch\(" "$P/lib" 2>/dev/null | while read -r f; do
+      grep -qE "ParentalGate|requireParentalGate|beforeOpen" "$f" || warn M7 "$f: 外部リンクの前に保護者ゲートがない可能性"
+    done
+  fi
+
   # ---- Android ----
   G=$(ls "$P"/android/app/build.gradle* 2>/dev/null | head -1)
   if [ -n "$G" ]; then

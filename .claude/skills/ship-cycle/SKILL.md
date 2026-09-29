@@ -15,13 +15,23 @@ S=.claude/skills/ship-cycle
 bash $S/preflight.sh [dir]      # Stage 1: 静的チェック（Flutter不要・数秒）
 bash $S/verify.sh [dir]         # Stage 2: pub get / codegen / analyze / test（変更パッケージのみ）
 bash $S/release-prep.sh [dir]   # Stage 3: リリース準備レポート（RELEASE_REPORT.md 生成、store-check 込み）
-bash $S/store-check.sh [dir]    # ストア登録・アップロードで弾かれる設定だけを確認
+bash $S/store-check.sh [dir]    # ストア登録・アップロード・広告/課金ポリシーで弾かれる設定を確認
+bash $S/device-check.sh <app> [apk] [秒]  # 実機テスト（Windows ローカル + USB 実機。logcat 自動判定）
 bash $S/ship.sh [dir]           # 1→2→3 を順に実行し、最初の失敗で停止
 ```
 
 - `dir` 省略時はカレント。モノレポでは `apps/*` `packages/*` のうち **git 差分がある pubspec 単位だけ** を対象にする（`ALL=1` で全件）。
 - 終了コード: 0=OK / 1=ブロッカーあり。警告は止めない。
 - 環境変数: `BASE=<ref>`（差分基準。省略時は origin の既定ブランチを自動判定）, `ALL=1`, `SKIP_TEST=1`, `OFFLINE=1`（`pub get --offline` 優先）
+
+## 環境別の使い分け
+
+方針の正本は **shared_core `docs/DEV_PLAYBOOK.md`**（役割分担・マネタイズ・セキュリティ・実機テスト観点）。
+
+| 環境 | 実行するもの |
+|---|---|
+| クラウド Code | `preflight` → `store-check`（SDK なし）→ PR → CI に analyze/test を任せる |
+| Windows ローカル（Git Bash） | `ship.sh`（verify 含む）→ `flutter build apk --release` → `device-check.sh` → 結果を PR/Issue にコメント |
 
 ## Claude の実行手順（自動運用）
 
@@ -75,6 +85,22 @@ bash $S/ship.sh [dir]           # 1→2→3 を順に実行し、最初の失敗
 | I6 | ITSAppUsesNonExemptEncryption なし | 毎回輸出コンプラ質問で提出が止まる |
 | I7 | CI の Xcode < 26（2026-04-28〜） | App Store Connect がアップロード拒否 |
 | I8 | GoogleService-Info.plist の BUNDLE_ID 不一致 | Firebase 初期化失敗 |
+
+### マネタイズ・セキュリティ（子ども向けアプリ前提）
+
+| # | 検出内容 | リスク |
+|---|---|---|
+| M1 | 子ども向けアプリで AdMob に TFCD/TFAT・`maxAdContentRating` なし | Play ファミリーポリシー違反で削除 |
+| M2 | UMP 同意フローなし | EEA/UK で広告停止・ポリシー違反 |
+| M3 | 本番広告ユニット ID の直書き | 開発中の自己クリックで AdMob 停止 |
+| M4 | iOS で AdMob + Firebase Analytics（Kids カテゴリ） | ガイドライン 1.3 リジェクト |
+| M5 | 購入の復元導線なし | ガイドライン 3.1.1 リジェクト |
+| M6 | 購入導線に保護者ゲートなし | Kids / Families ポリシー違反 |
+| M7 | 子ども向けアプリの外部リンク（CrossPromoSection 等）に保護者ゲートなし | Apple 1.3 / Families リジェクト |
+| SEC1 | Firestore `write: if true` / 公開読取 | データ改ざん・個人情報漏えい |
+| SEC2 | `usesCleartextTraffic` / `debuggable` | 通信盗聴・解析 |
+| SEC3 | `.sh` の CRLF、`.gitattributes` 未設定 | Windows 編集後に CI/クラウドで実行不能 |
+| SEC4 | release ビルドの難読化なし | リバースエンジニアリング |
 
 ### ルール更新（ユーザー確認不要・自動）
 

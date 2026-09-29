@@ -95,6 +95,32 @@ git -C "$REPO_TOP" ls-files -z 2>/dev/null | xargs -0 -r grep -nIE \
 git -C "$REPO_TOP" ls-files 2>/dev/null | grep -E "\.(jks|keystore|p12|p8)$|key\.properties$" \
   | while read -r f; do err P10 "署名鍵/鍵設定がコミットされている: $f"; done
 
+# SEC1: Firestore ルール
+for R in $(git -C "$REPO_TOP" ls-files '*.rules' 2>/dev/null); do
+  grep -nE "allow[^;]*write[^;]*:\s*if\s+true" "$REPO_TOP/$R" | while IFS= read -r l; do err SEC1 "$R:$l（誰でも書き込み可）"; done
+  n=$(grep -cE "allow\s+read\s*:\s*if\s+true" "$REPO_TOP/$R")
+  [ "$n" -gt 0 ] && warn SEC1 "$R: 公開読取 $n 箇所 → 個人情報（本名・学年等）が含まれないか確認（子ども向け/COPPA）"
+done
+# SEC2: 危険な Manifest 設定
+git -C "$REPO_TOP" ls-files '*AndroidManifest.xml' 2>/dev/null | grep -v "/debug/\|/profile/" | while read -r m; do
+  grep -nE 'usesCleartextTraffic="true"|android:debuggable="true"' "$REPO_TOP/$m" | while IFS= read -r l; do err SEC2 "$m:$l"; done
+done
+# SEC3: CRLF の .sh（Windows 編集由来。Linux/CI で bad interpreter）
+git -C "$REPO_TOP" ls-files '*.sh' 2>/dev/null | while read -r f; do
+  grep -q $'\r' "$REPO_TOP/$f" 2>/dev/null && err SEC3 "$f が CRLF（dos2unix / .gitattributes に *.sh text eol=lf）"
+done
+[ -n "$(git -C "$REPO_TOP" ls-files '*.sh' 2>/dev/null)" ] && ! grep -qs "\*\.sh.*eol=lf" "$REPO_TOP/.gitattributes" \
+  && warn SEC3 ".gitattributes に '*.sh text eol=lf' なし（Windows で CRLF 化する恐れ）"
+# SEC4: release ビルドの難読化
+if [ -d "$WF" ]; then
+  for f in "$WF"/*.y*ml; do
+    # 行末 \ の継続行を連結してから判定
+    awk '{ if (buf=="") start=FNR; buf=buf $0; if ($0 ~ /\\$/) { sub(/\\$/,"",buf); next } print start": "buf; buf="" }' "$f" \
+      | grep -E "flutter build (apk|appbundle|ipa)[^#]*--release" | grep -v obfuscate \
+      | while IFS= read -r l; do warn SEC4 "${f##*/}:${l%%:*} → --obfuscate --split-debug-info=build/symbols 推奨"; done
+  done
+fi
+
 # P12: 旧組織 URL
 git -C "$REPO_TOP" grep -n "org-zka32101" -- ":!*.md" ":!.claude/skills/ship-cycle" 2>/dev/null | cut -c1-160 \
   | while IFS= read -r l; do err P12 "$l"; done

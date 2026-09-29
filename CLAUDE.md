@@ -182,6 +182,12 @@ docker-compose run --rm claude npm cache clean --force
 docker stats yourwish-claude-code
 ```
 
+## 開発プレイブック（全セッション必読）
+
+Windows ローカル / クラウド Code の役割分担、マネタイズ・広告（子ども向けポリシー）、セキュリティ、実機テスト観点の正本:
+**[`docs/DEV_PLAYBOOK.md`](https://github.com/zka32101/shared_core/blob/main/docs/DEV_PLAYBOOK.md)**（shared_core）。
+自動チェックは `.claude/skills/ship-cycle/`（`ship.sh` / `store-check.sh` / `device-check.sh`）。
+
 ## Phase 128: SNS配信ゲーム Advanced Architecture & Quantum Integration
 
 **ステータス**: 準備中 🚀  
