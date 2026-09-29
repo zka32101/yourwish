@@ -1,11 +1,68 @@
 #!/usr/bin/env bash
-# 10観点デバイステスト（Android エミュレータ/実機・iOS シミュレータ共通）
-#   bash device-10check.sh android|ios [app_dir]
-# 環境変数: APK=<path>（ローカル実機で release APK を検証。指定時は drive/ビルドを省略）
-#           WAIT=20（起動後の待機秒）  OUT=<成果物ディレクトリ>
+# 10観点デバイステスト（Android エミュレータ/実機・iOS シミュレータ共通）＋撮影ユーティリティ
+#   bash device-10check.sh android|ios [app_dir]       # 10観点テスト → 結果を 1 つの zip にまとめて Google ドライブへ
+#   bash device-10check.sh shot <name> [out]           # スクリーンショット 1 枚（+ 直前ログ）
+#   bash device-10check.sh record <秒> <name> [out]    # 録画（再現用・最大 180 秒）
+#   bash device-10check.sh demo on|off                 # ステータスバー固定（9:41・電池100%・通知なし）
+#   bash device-10check.sh sheet [dir]                 # スクショ一覧画像（ImageMagick があれば）
+# 環境変数: APK=<path>（ローカル実機で release APK を検証）/ WAIT=20 / OUT=<成果物dir> / DEMO=1
+#           DRIVE_DIR=<保存先>（既定: マイドライブ/apk/test-results。無ければ保存しない）
 # 観点: 1起動 2クラッシュ 3全画面 4通信 5認証 6課金 7広告・同意 8子ども向け 9ライフサイクル・権限 10性能
 set -uo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
+
+# ---------- 撮影ユーティリティ（iOS 実機は CLI 不可 → flutter drive の takeScreenshot を使う） ----------
+if [[ "${1:-}" =~ ^(shot|record|demo|sheet)$ ]]; then
+  CMD="$1"; OUT_DEFAULT="${OUT:-./device-test-results/screenshots}"
+  if command -v adb >/dev/null && adb get-state >/dev/null 2>&1; then P=android
+  elif command -v xcrun >/dev/null && xcrun simctl list devices booted | grep -q Booted; then P=ios
+  else P=none; fi
+
+  case "$CMD" in
+    shot)
+      N="${2:?name}"; O="${3:-$OUT_DEFAULT}"; mkdir -p "$O"; F="$O/$(date +%H%M%S)_$N.png"
+      # exec-out はバイナリをそのまま転送（Windows で shell screencap すると改行変換で PNG が壊れる）
+      case $P in
+        android) adb exec-out screencap -p > "$F" ;;
+        ios) xcrun simctl io booted screenshot "$F" >/dev/null ;;
+        *) echo "端末なし"; exit 1 ;;
+      esac
+      # 直前 200 行のログを同名で保存（画像だけでは原因が分からないため）
+      [ $P = android ] && adb logcat -d -t 200 > "${F%.png}.log" 2>/dev/null
+      echo "📸 $F" ;;
+    record)
+      S="${2:-30}"; N="${3:?name}"; O="${4:-$OUT_DEFAULT}"; mkdir -p "$O"; F="$O/$(date +%H%M%S)_$N.mp4"
+      [ "$S" -gt 180 ] && S=180
+      case $P in
+        android) adb shell screenrecord --time-limit "$S" --bit-rate 4000000 /sdcard/sc_rec.mp4 \
+                   && adb pull /sdcard/sc_rec.mp4 "$F" >/dev/null && adb shell rm /sdcard/sc_rec.mp4 ;;
+        ios) xcrun simctl io booted recordVideo --codec=h264 "$F" & pid=$!; sleep "$S"; kill -INT $pid; wait $pid 2>/dev/null ;;
+        *) echo "端末なし"; exit 1 ;;
+      esac
+      echo "🎥 $F" ;;
+    demo)
+      if [ $P = android ]; then
+        if [ "${2:-on}" = on ]; then
+          adb shell settings put global sysui_demo_allowed 1
+          for a in "command enter" "command clock -e hhmm 0941" "command battery -e level 100 -e plugged false" \
+                   "command network -e wifi show -e level 4 -e mobile show -e level 4" "command notifications -e visible false"; do
+            adb shell am broadcast -a com.android.systemui.demo -e $a >/dev/null
+          done
+        else adb shell am broadcast -a com.android.systemui.demo -e command exit >/dev/null; fi
+      elif [ $P = ios ]; then
+        if [ "${2:-on}" = on ]; then xcrun simctl status_bar booted override --time "9:41" --batteryState charged --batteryLevel 100 --cellularBars 4 --wifiBars 3
+        else xcrun simctl status_bar booted clear; fi
+      fi
+      echo "demo ${2:-on} ($P)" ;;
+    sheet)
+      O="${2:-$OUT_DEFAULT}"
+      if command -v magick >/dev/null || command -v montage >/dev/null; then
+        M=$(command -v magick >/dev/null && echo "magick montage" || echo montage)
+        $M "$O"/*.png -resize 270x -tile 6x -geometry +4+4 -label '%t' "$O/../contact_sheet.jpg" && echo "🗂  $O/../contact_sheet.jpg"
+      else echo "ImageMagick なし → 一覧画像はスキップ（PNG はそのまま確認）"; fi ;;
+  esac
+  exit 0
+fi
 PLAT="${1:?android|ios}"; APP="${2:-.}"; cd "$APP" || exit 1
 WAIT="${WAIT:-20}"; OUT="${OUT:-$PWD/device-test-results}"; mkdir -p "$OUT/screenshots"
 LOG="$OUT/device.log"; DRIVE="$OUT/drive.log"; : > "$LOG"; : > "$DRIVE"
@@ -41,6 +98,7 @@ if [ "$PLAT" = android ]; then
   adb -s "$DEV" install -r -g "$APK" >/dev/null 2>&1 || { set_r 1 ❌ "インストール失敗"; }
   launch() { adb -s "$DEV" shell monkey -p "$ID" -c android.intent.category.LAUNCHER 1 >/dev/null 2>&1; }
   alive() { adb -s "$DEV" shell pidof "$ID" >/dev/null 2>&1; }
+  [ "${DEMO:-1}" = 1 ] && bash "$HERE/device-10check.sh" demo on >/dev/null 2>&1
   adb -s "$DEV" logcat -c; launch; sleep "$WAIT"
   ALIVE1=0; alive && ALIVE1=1
   adb -s "$DEV" exec-out screencap -p > "$OUT/screenshots/zz_launch_native.png" 2>/dev/null
@@ -61,6 +119,7 @@ b=[x for x in c if x["state"]=="Booted"]; print((b or c)[-1]["udid"] if c else "
   [ -n "$DEV" ] || { echo "❌ iPhone シミュレータなし"; exit 1; }
   xcrun simctl boot "$DEV" 2>/dev/null; xcrun simctl bootstatus "$DEV" -b >/dev/null 2>&1
   T0=$(date +%s)
+  [ "${DEMO:-1}" = 1 ] && xcrun simctl status_bar "$DEV" override --time "9:41" --batteryState charged --batteryLevel 100 >/dev/null 2>&1
   DRIVE_RC=0; run_drive "$DEV"
   APPB=$(ls -d build/ios/iphonesimulator/Runner.app 2>/dev/null)
   [ -n "$APPB" ] || { flutter build ios --simulator --debug >>"$DRIVE" 2>&1; APPB=build/ios/iphonesimulator/Runner.app; }
@@ -139,6 +198,9 @@ if [ -n "$START" ]; then  # "+1s234ms" / "+876ms" → ms（bc 不要）
 has "Skipped [0-9]{2,} frames|Davey!" && { P10="⚠️"; M10="$M10 / $(first "Skipped [0-9]+ frames|Davey! duration=[0-9]+ms")"; }
 set_r 10 "$P10" "${M10:-計測値なし（実機で DevTools）}"
 
+[ "$PLAT" = android ] && [ "${DEMO:-1}" = 1 ] && bash "$HERE/device-10check.sh" demo off >/dev/null 2>&1
+OUT="$OUT/screenshots" bash "$HERE/device-10check.sh" sheet "$OUT/screenshots" >/dev/null 2>&1
+
 # ---------- レポート ----------
 REPORT="$OUT/report.md"
 {
@@ -150,4 +212,20 @@ REPORT="$OUT/report.md"
 } > "$REPORT"
 [ -n "${GITHUB_STEP_SUMMARY:-}" ] && cat "$REPORT" >> "$GITHUB_STEP_SUMMARY"
 echo "📝 $REPORT"
+
+# ---------- 1 ファイルにまとめる（スクショ・ログ・レポートを分散させない） ----------
+APPNAME=$(grep -m1 "^name:" pubspec.yaml | awk '{print $2}')
+VER=$(grep -m1 "^version:" pubspec.yaml | awk '{print $2}' | tr '+' '_')
+ZIP="${APPNAME}_${VER:-na}_${PLAT}_$(date +%Y%m%d-%H%M).zip"
+( cd "$OUT" && rm -f ./*.zip
+  if command -v zip >/dev/null; then zip -qr "$ZIP" . -x '*.zip'
+  elif command -v powershell.exe >/dev/null; then powershell.exe -NoProfile -Command "Compress-Archive -Path * -DestinationPath '$ZIP'" >/dev/null
+  else python3 -c "import shutil,sys;shutil.make_archive(sys.argv[1][:-4],'zip','.')" "$ZIP"; fi )
+echo "📦 $OUT/$ZIP"
+echo "$OUT/$ZIP" > "$OUT/.zip_path"
+# ローカル（Windows の Google ドライブ同期フォルダ）: 決まった場所へコピー。CI はワークフロー側で rclone アップロード
+DRIVE_DIR="${DRIVE_DIR:-${USERPROFILE:-$HOME}/マイドライブ/apk/test-results}"
+if [ -z "${CI:-}" ] && [ -d "$(dirname "$DRIVE_DIR")" ]; then
+  mkdir -p "$DRIVE_DIR/$APPNAME" && cp "$OUT/$ZIP" "$DRIVE_DIR/$APPNAME/" && echo "☁️  $DRIVE_DIR/$APPNAME/$ZIP"
+fi
 exit "$FAILED"

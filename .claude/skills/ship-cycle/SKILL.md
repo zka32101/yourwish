@@ -17,7 +17,8 @@ bash $S/verify.sh [dir]         # Stage 2: pub get / codegen / analyze / test（
 bash $S/release-prep.sh [dir]   # Stage 3: リリース準備レポート（RELEASE_REPORT.md 生成、store-check 込み）
 bash $S/store-check.sh [dir]    # ストア登録・アップロード・広告/課金ポリシーで弾かれる設定を確認
 bash $S/device-check.sh <app> [apk] [秒]  # ローカル実機で 10観点（Windows Git Bash + USB 実機）
-bash $S/device-10check.sh android|ios [app] # 10観点テスト本体（CI の共通ワークフロー device-test.yml からも実行）
+bash $S/device-10check.sh android|ios [app] # 10観点テスト本体 → 結果を zip 1 つにまとめて Drive（マイドライブ/apk/test-results/<アプリ>/）へ
+bash $S/device-10check.sh shot|record|demo|sheet ...  # 撮影ユーティリティ（DEVICE_TEST_POLICY.md §12）
 bash $S/bootstrap-tests.sh [app]          # 10観点テストの初回導入（ship.sh が未導入なら自動実行）
 bash $S/ship.sh [dir]           # 1→2→3 を順に実行し、最初の失敗で停止
 ```
@@ -42,7 +43,8 @@ bash $S/ship.sh [dir]           # 1→2→3 を順に実行し、最初の失敗
 `ship.sh` を実行すると、変更のあったアプリに 10観点テストが無ければ自動で導入する（`integration_test/`・`test_driver/`・`.github/workflows/device-test.yml`・pubspec）。
 Claude はその変更をコミットして PR を作り、**`ios-test` ラベルを付ける**（Android は自動実行、iOS はラベルで実行）。
 初回結果の `SHIP_CYCLE_WARN`（引数必須の画面など）は `screen_catalog.dart` の `skipRoutes` に入れて再実行する。
-観点の定義と iOS 固有の観点は `DEVICE_TEST_POLICY.md` §1・§11。
+観点の定義は `DEVICE_TEST_POLICY.md` §1、iOS 固有は §11、撮影と保存場所は §12、トラブルシューティングは §13。
+不具合調査を頼まれたら §13 の順（再現 → 切り分け → 収集 → 原因特定 → 再発防止チェック追加）で進める。
 
 ## Claude の実行手順（自動運用）
 
