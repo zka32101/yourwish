@@ -12,7 +12,7 @@
 - ✅ GitHub Actions による自動ビルド・デプロイ
 - ✅ ローカル環境不要（リモート実行）
 - ✅ SessionStart Hook による自動初期化
-- ✅ 10観点デバイステスト（Android エミュレータ + iOS シミュレータ、初回導入は自動）
+- ✅ 10観点デバイステスト（shared_core で全アプリを自動検出・実行）
 
 ---
 
@@ -217,20 +217,8 @@ docker-compose run --rm flutter flutter build apk --release
 
 ## 🧪 10観点デバイステスト
 
-旧「6観点」（起動・接続・課金・認証・広告・クラッシュ）は **10観点** に見直して統一した。
-正本は shared_core の [`docs/DEVICE_TEST_POLICY.md`](https://github.com/zka32101/shared_core/blob/main/docs/DEVICE_TEST_POLICY.md)（§1 観点定義 / §11 iOS）。
-
-| # | 観点 | # | 観点 |
-|---|---|---|---|
-| 1 | 起動 | 6 | 課金 |
-| 2 | クラッシュ/ANR | 7 | 広告・同意 |
-| 3 | 全画面表示（全画面ツアー） | 8 | 子ども向け（保護者ゲート等） |
-| 4 | 通信 | 9 | ライフサイクル・権限 |
-| 5 | 認証 | 10 | 性能 |
-
-- **初回は自動**: `bash .claude/skills/ship-cycle/ship.sh` が未導入のアプリにテスト一式を生成 → PR で Android が自動実行。iOS は PR に `ios-test` ラベル。
-- ローカル実機: `bash .claude/skills/ship-cycle/device-check.sh <app> [release.apk]`
-- CI: `zka32101/shared_core/.github/workflows/device-test.yml`（本リポジトリの `emulator-test-template.yml` から手動実行も可）
+shared_core の `device-test.yml` が全公開アプリを自動検出して実行する（アプリ側の設定は不要）。
+観点・実機テスト・トラブルシューティングは [`shared_core/docs/DEV_PLAYBOOK.md`](https://github.com/zka32101/shared_core/blob/main/docs/DEV_PLAYBOOK.md) を参照。
 
 ---
 

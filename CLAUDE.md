@@ -184,10 +184,9 @@ docker stats yourwish-claude-code
 
 ## 開発プレイブック（全セッション必読）
 
-Windows ローカル / クラウド Code の役割分担、マネタイズ・広告（子ども向けポリシー）、セキュリティ、実機テスト観点の正本:
-**[`docs/DEV_PLAYBOOK.md`](https://github.com/zka32101/shared_core/blob/main/docs/DEV_PLAYBOOK.md)**（shared_core）。
-実機テストの方針: **[`docs/DEVICE_TEST_POLICY.md`](https://github.com/zka32101/shared_core/blob/main/docs/DEVICE_TEST_POLICY.md)**（shared_core）。
-自動チェックは `.claude/skills/ship-cycle/`（`ship.sh` / `store-check.sh` / `device-check.sh`）。
+開発・テスト・リリース・マネタイズ・セキュリティ・トラブルシューティングの唯一の正本:
+**[`shared_core/docs/DEV_PLAYBOOK.md`](https://github.com/zka32101/shared_core/blob/main/docs/DEV_PLAYBOOK.md)**。
+自動化は shared_core の `.claude/skills/ship-cycle/`（このリポジトリには入口の SKILL.md だけ）。
 
 ## Phase 128: SNS配信ゲーム Advanced Architecture & Quantum Integration
 

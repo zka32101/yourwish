@@ -72,7 +72,7 @@ description: マルチセッション統合オーケストレーター - 複数�
 1. リポジトリ作成時に `.claude/settings.json` を `defaultMode: bypassPermissions` で作成する
 2. `.claude/skills/build-and-test` を最初から導入する
 3. セッションタイトルは命名規則（`● <アプリ名> (<リポジトリ名>)`）で作成し、`orchestrator-managed` タグを付ける
-4. CI（lint/analyze/test）と、可能なら emulator-test-template.yml ベースのエミュレータテストを早期に導入する
+4. CI（lint/analyze/test）を早期に導入する（10観点テストは shared_core の device-test.yml が自動で対象にするため設定不要）
 5. 初期実装が一段落したら、通常の管理下アプリと同じ自動サイクル（security-review → code-review → UI改善 → テーマ統一 → 不要機能の無効化）に合流させる
 
 ### 権限モード
@@ -100,7 +100,7 @@ description: マルチセッション統合オーケストレーター - 複数�
 3. コードレビューと品質改善（`code-review` / `simplify` スキル）
 4. 見た目・操作性の改善、テーマ・デザインの統一
 5. 不要機能・デッドコードの無効化
-6. 10観点デバイステスト（shared_core `device-test.yml`。未導入アプリは ship-cycle が初回自動導入し、導入 PR・リリース PR には `ios-test` ラベルを付けて iOS も実行）
+6. 10観点デバイステスト（shared_core `device-test.yml` が全アプリを自動検出。リリース前は `apps=<アプリ>`・`ios=true` で手動実行）
 7. fastlane によるリリース自動化（導入済みアプリのみ）
    - Android: `fastlane supply` で internal/alpha/beta トラックへの自動アップロードは対象（審査不要のため自動化してよい）
    - iOS: `fastlane pilot` で TestFlight への自動アップロードは対象
