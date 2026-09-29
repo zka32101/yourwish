@@ -52,6 +52,8 @@ description: マルチセッション統合オーケストレーター - 複数�
 - 既に重複している場合は、最も進んでいる1本を残して他はアーカイブする。
 - **例外**: `session_01X66YwxQC5372fiJUMVw7yE`（「小学コレシリーズ機能と仕組みの統合管理」、複数リポジトリを`claude/relaxed-brahmagupta-9tarv4`ブランチで横断的に扱う）は2026-09-09にユーザー確認済みで**別ミッション**（このオーケストレーターの重複ではない）。監視・干渉しない。このセッションが各アプリのブランチにマージしたPRは、通常の巡回対応（次のビルド確認・APK完成指示等）の対象にしてよい。
 - セッションには必ずリポジトリ名のタグを付ける（例: `kokugo-kore`）。
+- セッション作成時の最初の指示（prompt）に、必ず次の 1 文を入れる（アプリ側にファイルを置かずに ship-cycle を使わせるため）:
+  「開発・テスト・リリース準備は shared_core の ship-cycle で行う（無ければ `git clone --depth 1 https://github.com/zka32101/shared_core ../shared_core` してから `../shared_core/.claude/skills/ship-cycle/SKILL.md` に従う。方針は `../shared_core/docs/DEV_PLAYBOOK.md`）」
 - 各セッションは自分のリポジトリだけを担当し、他リポジトリへ書き込まない。
 
 ### 新規アプリ・野良セッションの発見時
