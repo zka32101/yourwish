@@ -1,0 +1,2 @@
+# Windows で編集してもシェルスクリプトは LF のまま（CI/クラウドで bad interpreter を防ぐ）
+*.sh text eol=lf

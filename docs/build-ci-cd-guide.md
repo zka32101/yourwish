@@ -12,7 +12,7 @@
 - ✅ GitHub Actions による自動ビルド・デプロイ
 - ✅ ローカル環境不要（リモート実行）
 - ✅ SessionStart Hook による自動初期化
-- ✅ build-and-test スキルによる 6 観点テスト
+- ✅ 10観点デバイステスト（shared_core で全アプリを自動検出・実行）
 
 ---
 
@@ -215,33 +215,10 @@ docker-compose run --rm flutter flutter build apk --release
 
 ---
 
-## 🧪 build-and-test スキル — 6 観点テスト
+## 🧪 10観点デバイステスト
 
-Claude Code セッションで以下を実行：
-
-```bash
-/build-and-test <app_name>
-```
-
-**テスト観点**:
-
-| # | 観点 | 説明 |
-|---|------|------|
-| 1 | **起動テスト** | App startup verification |
-| 2 | **接続テスト** | Network connectivity check |
-| 3 | **課金画面** | Billing screen display |
-| 4 | **認証テスト** | Authentication flow |
-| 5 | **広告テスト** | Ad display verification |
-| 6 | **クラッシュ検出** | Crash detection |
-
-**使用例**:
-```bash
-# kokugo-kore をテスト
-/build-and-test kokugo-kore
-
-# seiza_kore をテスト
-/build-and-test seiza_kore
-```
+shared_core の `device-test.yml` が全公開アプリを自動検出して実行する（アプリ側の設定は不要）。
+観点・実機テスト・トラブルシューティングは [`shared_core/docs/DEV_PLAYBOOK.md`](https://github.com/zka32101/shared_core/blob/main/docs/DEV_PLAYBOOK.md) を参照。
 
 ---
 

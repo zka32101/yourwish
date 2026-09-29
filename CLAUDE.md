@@ -182,6 +182,12 @@ docker-compose run --rm claude npm cache clean --force
 docker stats yourwish-claude-code
 ```
 
+## 開発プレイブック（全セッション必読）
+
+開発・テスト・リリース・マネタイズ・セキュリティ・トラブルシューティングの唯一の正本:
+**[`shared_core/docs/DEV_PLAYBOOK.md`](https://github.com/zka32101/shared_core/blob/main/docs/DEV_PLAYBOOK.md)**。
+自動化は shared_core の `.claude/skills/ship-cycle/`（このリポジトリには入口の SKILL.md だけ）。
+
 ## Phase 128: SNS配信ゲーム Advanced Architecture & Quantum Integration
 
 **ステータス**: 準備中 🚀  

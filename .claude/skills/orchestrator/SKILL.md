@@ -52,6 +52,8 @@ description: マルチセッション統合オーケストレーター - 複数�
 - 既に重複している場合は、最も進んでいる1本を残して他はアーカイブする。
 - **例外**: `session_01X66YwxQC5372fiJUMVw7yE`（「小学コレシリーズ機能と仕組みの統合管理」、複数リポジトリを`claude/relaxed-brahmagupta-9tarv4`ブランチで横断的に扱う）は2026-09-09にユーザー確認済みで**別ミッション**（このオーケストレーターの重複ではない）。監視・干渉しない。このセッションが各アプリのブランチにマージしたPRは、通常の巡回対応（次のビルド確認・APK完成指示等）の対象にしてよい。
 - セッションには必ずリポジトリ名のタグを付ける（例: `kokugo-kore`）。
+- セッション作成時の最初の指示（prompt）に、必ず次の 1 文を入れる（アプリ側にファイルを置かずに ship-cycle を使わせるため）:
+  「開発・テスト・リリース準備は shared_core の ship-cycle で行う（無ければ `git clone --depth 1 https://github.com/zka32101/shared_core ../shared_core` してから `../shared_core/.claude/skills/ship-cycle/SKILL.md` に従う。方針は `../shared_core/docs/DEV_PLAYBOOK.md`）」
 - 各セッションは自分のリポジトリだけを担当し、他リポジトリへ書き込まない。
 
 ### 新規アプリ・野良セッションの発見時
@@ -72,7 +74,7 @@ description: マルチセッション統合オーケストレーター - 複数�
 1. リポジトリ作成時に `.claude/settings.json` を `defaultMode: bypassPermissions` で作成する
 2. `.claude/skills/build-and-test` を最初から導入する
 3. セッションタイトルは命名規則（`● <アプリ名> (<リポジトリ名>)`）で作成し、`orchestrator-managed` タグを付ける
-4. CI（lint/analyze/test）と、可能なら emulator-test-template.yml ベースのエミュレータテストを早期に導入する
+4. CI（lint/analyze/test）を早期に導入する（10観点テストは shared_core の device-test.yml が自動で対象にするため設定不要）
 5. 初期実装が一段落したら、通常の管理下アプリと同じ自動サイクル（security-review → code-review → UI改善 → テーマ統一 → 不要機能の無効化）に合流させる
 
 ### 権限モード
@@ -100,7 +102,7 @@ description: マルチセッション統合オーケストレーター - 複数�
 3. コードレビューと品質改善（`code-review` / `simplify` スキル）
 4. 見た目・操作性の改善、テーマ・デザインの統一
 5. 不要機能・デッドコードの無効化
-6. エミュレータテスト（GitHub Actions）で6観点検証
+6. 10観点デバイステスト（shared_core `device-test.yml` が全アプリを自動検出。リリース前は `apps=<アプリ>`・`ios=true` で手動実行）
 7. fastlane によるリリース自動化（導入済みアプリのみ）
    - Android: `fastlane supply` で internal/alpha/beta トラックへの自動アップロードは対象（審査不要のため自動化してよい）
    - iOS: `fastlane pilot` で TestFlight への自動アップロードは対象
