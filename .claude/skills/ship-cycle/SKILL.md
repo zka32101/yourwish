@@ -16,7 +16,9 @@ bash $S/preflight.sh [dir]      # Stage 1: 静的チェック（Flutter不要・
 bash $S/verify.sh [dir]         # Stage 2: pub get / codegen / analyze / test（変更パッケージのみ）
 bash $S/release-prep.sh [dir]   # Stage 3: リリース準備レポート（RELEASE_REPORT.md 生成、store-check 込み）
 bash $S/store-check.sh [dir]    # ストア登録・アップロード・広告/課金ポリシーで弾かれる設定を確認
-bash $S/device-check.sh <app> [apk] [秒]  # 実機テスト（Windows ローカル + USB 実機。logcat 自動判定）
+bash $S/device-check.sh <app> [apk] [秒]  # ローカル実機で 10観点（Windows Git Bash + USB 実機）
+bash $S/device-10check.sh android|ios [app] # 10観点テスト本体（CI の共通ワークフロー device-test.yml からも実行）
+bash $S/bootstrap-tests.sh [app]          # 10観点テストの初回導入（ship.sh が未導入なら自動実行）
 bash $S/ship.sh [dir]           # 1→2→3 を順に実行し、最初の失敗で停止
 ```
 
@@ -28,12 +30,19 @@ bash $S/ship.sh [dir]           # 1→2→3 を順に実行し、最初の失敗
 
 方針の正本は **shared_core `docs/DEV_PLAYBOOK.md`**（役割分担・マネタイズ・セキュリティ）と
 **`docs/DEVICE_TEST_POLICY.md`**（実機テスト: L0〜L6 のレベル、全画面ツアー、連携マトリクス、異常系、合否基準）。
-リリース前は同ポリシーの流れ（L0/L1 → 内部テスト/TestFlight → L2〜L4 をストア配信版で → 段階公開）に従い、結果を §9 の形式で PR/Issue に残す。
+リリース前は同ポリシーの流れ（L0/L1 → 内部テスト/TestFlight → L2〜L4 をストア配信版で → 段階公開）に従い、結果を §10 の形式で PR/Issue に残す。
 
 | 環境 | 実行するもの |
 |---|---|
 | クラウド Code | `preflight` → `store-check`（SDK なし）→ PR → CI に analyze/test を任せる |
 | Windows ローカル（Git Bash） | `ship.sh`（verify 含む）→ `flutter build apk --release` → `device-check.sh` → 結果を PR/Issue にコメント |
+
+## 10観点デバイステスト（初回から自動）
+
+`ship.sh` を実行すると、変更のあったアプリに 10観点テストが無ければ自動で導入する（`integration_test/`・`test_driver/`・`.github/workflows/device-test.yml`・pubspec）。
+Claude はその変更をコミットして PR を作り、**`ios-test` ラベルを付ける**（Android は自動実行、iOS はラベルで実行）。
+初回結果の `SHIP_CYCLE_WARN`（引数必須の画面など）は `screen_catalog.dart` の `skipRoutes` に入れて再実行する。
+観点の定義と iOS 固有の観点は `DEVICE_TEST_POLICY.md` §1・§11。
 
 ## Claude の実行手順（自動運用）
 
@@ -88,6 +97,10 @@ bash $S/ship.sh [dir]           # 1→2→3 を順に実行し、最初の失敗
 | I6 | ITSAppUsesNonExemptEncryption なし | 毎回輸出コンプラ質問で提出が止まる |
 | I7 | CI の Xcode < 26（2026-04-28〜） | App Store Connect がアップロード拒否 |
 | I8 | GoogleService-Info.plist の BUNDLE_ID 不一致 | Firebase 初期化失敗 |
+| I9 | 外部ログインあり・Sign in with Apple なし | ガイドライン 4.8 |
+| I10 | iPad の対応方向が 4 方向未満（UIRequiresFullScreen なし） | ITMS-90474 |
+| I11 | 子ども向けアプリで ATT | Kids カテゴリ違反 |
+| I12 | アカウント作成ありでアプリ内削除なし | ガイドライン 5.1.1(v) |
 
 ### マネタイズ・セキュリティ（子ども向けアプリ前提）
 

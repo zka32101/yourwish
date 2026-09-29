@@ -1,0 +1,34 @@
+# ship-cycle bootstrap で自動生成。10観点デバイステスト（shared_core の共通ワークフローを呼ぶ）
+# 方針: shared_core docs/DEVICE_TEST_POLICY.md
+# - Android エミュレータ: lib/android/pubspec 等を変更した PR で自動実行
+# - iOS シミュレータ（macOS = 10倍課金）: PR に `ios-test` ラベルがある時と手動実行時のみ
+name: Device Test (10観点)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled]
+    paths:
+      - 'lib/**'
+      - 'android/**'
+      - 'ios/**'
+      - 'pubspec.yaml'
+      - 'integration_test/**'
+      - 'test_driver/**'
+      - '.github/workflows/device-test.yml'
+  workflow_dispatch:
+    inputs:
+      ios:
+        type: boolean
+        default: true
+        description: 'iOS シミュレータも実行する'
+
+concurrency:
+  group: device-test-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  device-test:
+    uses: zka32101/shared_core/.github/workflows/device-test.yml@main
+    with:
+      android: ${{ github.event.action != 'labeled' }}
+      ios: ${{ (github.event_name == 'workflow_dispatch' && inputs.ios) || contains(github.event.pull_request.labels.*.name, 'ios-test') }}

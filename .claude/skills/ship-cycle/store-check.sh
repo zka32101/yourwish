@@ -139,6 +139,22 @@ for P in $(target_packages .); do
     need record NSMicrophoneUsageDescription
     need app_tracking_transparency NSUserTrackingUsageDescription
     need google_mobile_ads GADApplicationIdentifier
+    # I9: 外部ログインを使うなら同等のプライバシー配慮ログイン（Sign in with Apple 等）が必要（4.8）
+    if has_dep google_sign_in || has_dep flutter_facebook_auth || has_dep flutter_line_sdk; then
+      has_dep sign_in_with_apple || warn I9 "外部ログインあり・Sign in with Apple なし → ガイドライン 4.8 でリジェクトの恐れ"
+    fi
+    # I10: iPad マルチタスクは全方向対応が必要（ITMS-90474）
+    if grep -q "UISupportedInterfaceOrientations~ipad" "$PL" 2>/dev/null && ! grep -A1 "UIRequiresFullScreen" "$PL" | grep -q "<true/>"; then
+      n=$(awk '/UISupportedInterfaceOrientations~ipad/{f=1;next} f&&/<\/array>/{exit} f&&/UIInterfaceOrientation/{c++} END{print c+0}' "$PL")
+      [ "$n" -lt 4 ] && err I10 "iPad の対応方向が $n 方向（ITMS-90474）→ 4 方向対応か UIRequiresFullScreen=true"
+    fi
+    # I11: 子ども向けアプリでトラッキング許可（ATT）を求めない
+    [ "$KIDS" = 1 ] && has_dep app_tracking_transparency && warn I11 "子ども向けアプリで ATT 使用 → Kids カテゴリではトラッキング不可。子ども向けタグで非パーソナライズに"
+    # I12: アカウント作成できるならアプリ内削除が必要（5.1.1(v)）
+    if has_dep firebase_auth && grep -rqsE "createUserWithEmailAndPassword|GoogleAuthProvider|AppleAuthProvider|signInWithCredential|linkWithCredential" "$P/lib"; then
+      grep -rqsE "currentUser!?\??\.delete\(|user!?\??\.delete\(|deleteAccount|deleteUser" "$P/lib" \
+        || warn I12 "アカウント作成/連携あり・アプリ内アカウント削除が見当たらない（ガイドライン 5.1.1(v) でリジェクト）"
+    fi
     # アイコン 1024 にアルファがあると ITMS-90717
     ICON=$(ls "$P"/ios/Runner/Assets.xcassets/AppIcon.appiconset/*1024*.png 2>/dev/null | head -1)
     if [ -n "$ICON" ]; then

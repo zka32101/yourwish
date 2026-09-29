@@ -100,7 +100,7 @@ description: マルチセッション統合オーケストレーター - 複数�
 3. コードレビューと品質改善（`code-review` / `simplify` スキル）
 4. 見た目・操作性の改善、テーマ・デザインの統一
 5. 不要機能・デッドコードの無効化
-6. エミュレータテスト（GitHub Actions）で6観点検証
+6. 10観点デバイステスト（shared_core `device-test.yml`。未導入アプリは ship-cycle が初回自動導入し、導入 PR・リリース PR には `ios-test` ラベルを付けて iOS も実行）
 7. fastlane によるリリース自動化（導入済みアプリのみ）
    - Android: `fastlane supply` で internal/alpha/beta トラックへの自動アップロードは対象（審査不要のため自動化してよい）
    - iOS: `fastlane pilot` で TestFlight への自動アップロードは対象
