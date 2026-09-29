@@ -62,6 +62,7 @@ bash $S/ship.sh [dir]           # 1→2→3 を順に実行し、最初の失敗
 | P10 | 秘密情報のコミット（`goog_`/`appl_`/`AIza`/秘密鍵/keystore） | secure-secrets 方針 | 1 |
 | P11 | 1x1 などのダミーアプリアイコン | yourwish 64dc6c1 | 1(警告) |
 | P12 | 古い組織 URL `org-zka32101` | shared_core #54 | 1 |
+| P16 | 共有パッケージで依存をメジャー更新（依存元アプリと衝突） | shared_core #70 以降 verify-all-apps 全滅 | 1(警告) |
 | P13 | stale な `pubspec.lock` / `.dart_tool` による依存解決ズレ | yourwish 29bc4f1 | 2 |
 | P14 | codegen 後に生成物差分が出る（コミット漏れ） | shared_core ddaf584 | 2 |
 | P15 | version 未更新 / CHANGELOG 未記載 / 署名設定欠落 | リリース前 | 3 |

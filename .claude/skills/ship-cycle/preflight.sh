@@ -71,6 +71,21 @@ for P in $PKGS; do
     err P7 "$P/test にテンプレのままの widget_test（カウンタ）が残っている"
   fi
 
+  # P16: 共有パッケージ（shared_core 等 git 依存される側）で依存のメジャー版を上げた
+  #      → 依存元アプリの制約と衝突し、全アプリの pub get が失敗する（verify-all-apps 全滅の事例）
+  if grep -qE "^publish_to: *['\"]?none" "$PUB" && [ ! -d "$P/android" ]; then
+    BASE_PUB=$(git show "$(default_base):$(realpath --relative-to="$REPO_TOP" "$PUB")" 2>/dev/null)
+    if [ -n "$BASE_PUB" ]; then
+      diff <(echo "$BASE_PUB" | grep -E "^  [a-z_]+: \^[0-9]" | sort) <(grep -E "^  [a-z_]+: \^[0-9]" "$PUB" | sort) \
+        | grep "^>" | while read -r _ dep ver; do
+          old=$(echo "$BASE_PUB" | grep -E "^  $dep \^" | awk '{print $2}' | tr -d '^'); new=${ver#^}
+          # 0.x は minor がメジャー扱い
+          om=$(echo "$old" | awk -F. '{print ($1=="0")? $1"."$2 : $1}'); nm=$(echo "$new" | awk -F. '{print ($1=="0")? $1"."$2 : $1}')
+          [ -n "$old" ] && [ "$om" != "$nm" ] && warn P16 "$PUB ${dep%:} $old → $new はメジャー更新。依存元アプリ全ての制約更新とセットで（verify-all-apps で確認）"
+        done
+    fi
+  fi
+
   # P11: ダミーアイコン（100 byte 未満の launcher PNG）
   find "$P/android/app/src/main/res" -name 'ic_launcher*.png' -size -100c 2>/dev/null \
     | while read -r f; do warn P11 "$f がダミー画像の可能性（<100B）"; done
