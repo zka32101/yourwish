@@ -14,7 +14,8 @@ description: 開発→テスト→リリース準備を低リソースで自動�
 S=.claude/skills/ship-cycle
 bash $S/preflight.sh [dir]      # Stage 1: 静的チェック（Flutter不要・数秒）
 bash $S/verify.sh [dir]         # Stage 2: pub get / codegen / analyze / test（変更パッケージのみ）
-bash $S/release-prep.sh [dir]   # Stage 3: リリース準備レポート（RELEASE_REPORT.md 生成）
+bash $S/release-prep.sh [dir]   # Stage 3: リリース準備レポート（RELEASE_REPORT.md 生成、store-check 込み）
+bash $S/store-check.sh [dir]    # ストア登録・アップロードで弾かれる設定だけを確認
 bash $S/ship.sh [dir]           # 1→2→3 を順に実行し、最初の失敗で停止
 ```
 
@@ -29,7 +30,9 @@ bash $S/ship.sh [dir]           # 1→2→3 を順に実行し、最初の失敗
 3. Stage 2 で codegen 差分が出たら生成物をコミットに含める（`.freezed.dart` / `.g.dart` は**コミット対象**）。
 4. リリース前は Stage 3。`RELEASE_REPORT.md` の ❌ を 0 にしてから PR 本文に要約を貼る。
 5. 失敗を直したら**同じ Stage を再実行して green を確認**してから push（speculative push をしない）。
-6. ストア公開・Secrets 登録・署名鍵作成はユーザー作業。レポートの「ユーザー作業」欄に列挙するだけで止まらない。
+6. 自動修正してよいもの（確認不要）: version/build 番号の繰り上げ、versionCode/CFBundleVersion を Flutter 変数化、targetSdk/compileSdk/minSdk の引き上げ、PrivacyInfo.xcprivacy・Info.plist の権限説明文・ITSAppUsesNonExemptEncryption の追加、CI の Flutter/Xcode バージョン更新（更新後にビルドが通ることを CI で確認）。
+7. ユーザーに依頼するもの: applicationId/Bundle ID の決定（公開後は変更不可）、ストア公開、Secrets・署名鍵、Firebase SHA-1 登録、Play Console/App Store Connect の申告。
+8. ストア公開・Secrets 登録・署名鍵作成はユーザー作業。レポートの「ユーザー作業」欄に列挙するだけで止まらない。
 
 ## 検出する既知の失敗パターン（実績ベース）
 
@@ -50,6 +53,35 @@ bash $S/ship.sh [dir]           # 1→2→3 を順に実行し、最初の失敗
 | P13 | stale な `pubspec.lock` / `.dart_tool` による依存解決ズレ | yourwish 29bc4f1 | 2 |
 | P14 | codegen 後に生成物差分が出る（コミット漏れ） | shared_core ddaf584 | 2 |
 | P15 | version 未更新 / CHANGELOG 未記載 / 署名設定欠落 | リリース前 | 3 |
+
+### ストア登録・アップロードエラー（`store-check.sh`、要件値は `store-rules.env`）
+
+| # | 検出内容 | 起きるエラー |
+|---|---|---|
+| S1 | targetSdk < 36（2026-08-31〜） / compileSdk < targetSdk | Play: ターゲット API レベル要件でアップロード拒否 |
+| S2 | Firebase 使用で minSdk < 23 | Manifest merger / ビルド失敗 |
+| S3 | build.gradle に versionCode 直書き | pubspec を上げても「バージョンコード使用済み」 |
+| S4 | version が `X.Y.Z+N` でない / build 番号が既存タグ以下 / 上限超過 | Play・App Store とも重複で拒否 |
+| S5 | CI の Flutter < 3.32、NDK < r28 | Play: 16KB ページ非対応で更新拒否 |
+| S6 / I4 | `com.example` の applicationId / Bundle ID、xcodeproj 欠落 | ストアに登録できない |
+| S7 | google_mobile_ads 使用で AdMob APPLICATION_ID なし | 起動直後クラッシュ |
+| S8 | 広告ID使用 | Play Console の広告ID申告不一致でリジェクト |
+| S9 | Google サインイン | 本番だけ DEVELOPER_ERROR 10（SHA-1 未登録） |
+| S10 | RevenueCat | entitlement ID 不一致・課金アイテム未有効化 |
+| I1 | PrivacyInfo.xcprivacy なし | ITMS-91053 |
+| I2 | プラグインに必要な Info.plist の権限説明文なし | ITMS-90683 |
+| I3 | CFBundleVersion が直書き | build 番号重複で拒否 |
+| I5 | 1024 アイコンにアルファあり | ITMS-90717 |
+| I6 | ITSAppUsesNonExemptEncryption なし | 毎回輸出コンプラ質問で提出が止まる |
+| I7 | CI の Xcode < 26（2026-04-28〜） | App Store Connect がアップロード拒否 |
+| I8 | GoogleService-Info.plist の BUNDLE_ID 不一致 | Firebase 初期化失敗 |
+
+### ルール更新（ユーザー確認不要・自動）
+
+`store-rules.env` の `RULES_CHECKED` が 90 日以上前なら（store-check が RULES 警告を出す）:
+1. 各値の横にある公式 URL を WebFetch し、要件・期限を再確認（ブログより公式を優先）
+2. 値と `RULES_CHECKED` を更新し、変わった項目をコミットメッセージに書く
+3. yourwish と shared_core の両方の `ship-cycle` を同じ内容にそろえる
 
 新しい失敗が起きたら、**その根本原因を `preflight.sh` にチェックとして追加**し、この表に 1 行足す（同じ失敗を 2 度 CI で踏まない）。
 

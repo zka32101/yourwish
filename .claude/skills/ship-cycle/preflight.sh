@@ -96,7 +96,7 @@ git -C "$REPO_TOP" ls-files 2>/dev/null | grep -E "\.(jks|keystore|p12|p8)$|key\
   | while read -r f; do err P10 "署名鍵/鍵設定がコミットされている: $f"; done
 
 # P12: 旧組織 URL
-git -C "$REPO_TOP" grep -n "org-zka32101" -- ":!*.md" 2>/dev/null | cut -c1-160 \
+git -C "$REPO_TOP" grep -n "org-zka32101" -- ":!*.md" ":!.claude/skills/ship-cycle" 2>/dev/null | cut -c1-160 \
   | while IFS= read -r l; do err P12 "$l"; done
 
 summary "preflight"

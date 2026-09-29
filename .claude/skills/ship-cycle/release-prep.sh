@@ -45,6 +45,12 @@ for P in $(target_packages .); do
   echo "$P $VER" >> "$SC_LOG.apps"
 done
 
+# ストア登録エラー系（store-check.sh）を同じログに合流
+SC_OUT="$SC_LOG.store" bash "$HERE/store-check.sh" . || true
+[ -f "$SC_LOG.store" ] && cat "$SC_LOG.store" >> "$SC_LOG" && rm -f "$SC_LOG.store"
+grep -q "S9 " "$SC_LOG" && USER_TODO+=("Firebase にアップロード鍵と Play アプリ署名鍵の SHA-1 を登録")
+grep -q "S8 " "$SC_LOG" && USER_TODO+=("Play Console の広告ID申告・データセーフティを実装と一致させる")
+
 # レポート生成
 {
   echo "# Release Report"
