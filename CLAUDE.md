@@ -81,6 +81,7 @@ scripts/new_sns_game.sh <game_name> "説明文"
 詳細は以下を参照：
 
 - **SNS配信ゲーム環境**: [`docs/sns-live-game-environments.md`](docs/sns-live-game-environments.md)
+- **Google Play ASOルール（ストア掲載文・スクショ・動画・禁止事項。リリース前に必読）**: [`docs/aso-rules.md`](docs/aso-rules.md)
 - **各ゲームのREADME**: 各 `apps/<game>/README.md`
 
 ## Docker 永続化について
