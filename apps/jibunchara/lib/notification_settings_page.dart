@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'app_repository.dart';
 import 'notification_picker.dart';
 import 'notification_prefs.dart';
+import 'notification_scheduler.dart';
 
 const _slotLabels = {
   NotifSlot.morning: '朝',
@@ -42,11 +43,15 @@ class NotificationSettingsPage extends StatefulWidget {
     this.profile = const CompanionProfile(
         name: 'ミルク', mbti: 'INFP', element: 'water'),
     this.now = DateTime.now,
+    this.scheduler,
   });
 
   final AppRepository repository;
   final CompanionProfile profile;
   final DateTime Function() now;
+
+  /// 指定すると、設定を変えるたびに通知の予定を作り直す。
+  final NotificationScheduler? scheduler;
 
   @override
   State<NotificationSettingsPage> createState() =>
@@ -67,6 +72,14 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
   Future<void> _set(NotifPrefs next) async {
     setState(() => _prefs = next);
     await widget.repository.savePrefs(next);
+    final scheduler = widget.scheduler;
+    if (scheduler != null) {
+      await reschedule(
+        scheduler,
+        planSchedule(
+            prefs: next, profile: widget.profile, from: widget.now()),
+      );
+    }
   }
 
   Set<T> _toggle<T>(Set<T> set, T value, {bool keepOne = false}) {
