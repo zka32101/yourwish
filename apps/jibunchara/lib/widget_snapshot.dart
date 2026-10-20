@@ -1,3 +1,4 @@
+import 'growth.dart';
 import 'streak.dart';
 
 /// ホーム画面ウィジェットに表示する相棒の表情。
@@ -13,6 +14,7 @@ const lonelyAfterDays = 3;
 class WidgetSnapshot {
   const WidgetSnapshot({
     required this.mood,
+    required this.stage,
     required this.streakDays,
     required this.weekDays,
     required this.weekGoal,
@@ -20,12 +22,19 @@ class WidgetSnapshot {
   });
 
   final CompanionMood mood;
+  final GrowthStage stage;
   final int streakDays;
   final int weekDays;
   final int weekGoal;
   final String line;
 
+  /// ウィジェットに表示する画像のキー（例: `adult_happy`）。
+  /// 画像ファイル名は `<imageKey>.png`（docs/widget_images.md 参照）。
+  String get imageKey => '${stage.name}_${mood.name}';
+
   Map<String, Object> toMap() => {
+        'imageKey': imageKey,
+        'stage': stage.name,
         'mood': mood.name,
         'streakDays': streakDays,
         'weekDays': weekDays,
@@ -65,10 +74,15 @@ CompanionMood decideMood(StreakState s, DateTime now) {
       : CompanionMood.waiting;
 }
 
-WidgetSnapshot buildSnapshot(StreakState s, DateTime now) {
+WidgetSnapshot buildSnapshot(
+  StreakState s,
+  DateTime now, {
+  GrowthState growth = const GrowthState(),
+}) {
   final mood = decideMood(s, now);
   return WidgetSnapshot(
     mood: mood,
+    stage: growth.stage,
     streakDays: s.currentStreak(now),
     weekDays: s.daysCompletedInWeek(now),
     weekGoal: weeklyGoalDays,

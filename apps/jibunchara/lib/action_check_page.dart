@@ -81,7 +81,9 @@ class _ActionCheckPageState extends State<ActionCheckPage> {
     setState(() => _streak = next);
     await widget.repository.saveStreak(next);
     final sink = widget.widgetSink;
-    if (sink != null) await syncWidget(sink, next, widget.now());
+    if (sink != null) {
+      await syncWidget(sink, next, widget.now(), growth: _growth);
+    }
   }
 
   @override

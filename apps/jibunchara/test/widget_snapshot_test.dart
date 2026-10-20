@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:jibunchara/growth.dart';
 import 'package:jibunchara/storage.dart';
 import 'package:jibunchara/streak.dart';
 import 'package:jibunchara/widget_snapshot.dart';
@@ -48,6 +49,32 @@ void main() {
     expect(snap.streakDays, 2);
     expect(snap.weekGoal, weeklyGoalDays);
     expect(snap.toMap()['mood'], 'happy');
+  });
+
+  test('imageKey は ステージ_表情 で、全20通りが重複しない', () {
+    final keys = <String>{};
+    for (final st in GrowthStage.values) {
+      for (final m in CompanionMood.values) {
+        keys.add(WidgetSnapshot(
+          mood: m,
+          stage: st,
+          streakDays: 0,
+          weekDays: 0,
+          weekGoal: 5,
+          line: '',
+        ).imageKey);
+      }
+    }
+    expect(keys.length, 20);
+    expect(keys, contains('adult_happy'));
+  });
+
+  test('成長ステージがスナップショットに反映される', () {
+    final snap = buildSnapshot(StreakState(completed: {day}), at(9),
+        growth: const GrowthState(totalXp: 250));
+    expect(snap.stage, GrowthStage.adult);
+    expect(snap.imageKey, 'adult_happy');
+    expect(snap.toMap()['imageKey'], 'adult_happy');
   });
 
   test('syncWidget はJSONを書き込み、失敗してもfalseを返すだけ', () async {
