@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'growth.dart';
 import 'notification_prefs.dart';
 import 'storage.dart';
 import 'streak.dart';
@@ -31,6 +32,7 @@ class AppRepository {
 
   static const _streakKey = 'streak_v1';
   static const _prefsKey = 'notif_prefs_v1';
+  static const _growthKey = 'growth_v1';
 
   Future<StreakState> loadStreak() async {
     try {
@@ -90,6 +92,32 @@ class AppRepository {
           'tone': p.tone.name,
           'frequency': p.frequency.name,
           'restDays': p.restDays.toList()..sort(),
+        }),
+      );
+
+  Future<GrowthState> loadGrowth() async {
+    try {
+      final raw = await _store.read(_growthKey);
+      if (raw == null) return const GrowthState();
+      final m = jsonDecode(raw) as Map<String, dynamic>;
+      final xp = m['totalXp'];
+      final claimed = m['claimed'];
+      return GrowthState(
+        totalXp: xp is int && xp >= 0 ? xp : 0,
+        claimed: claimed is List
+            ? {for (final e in claimed) if (e is String) e}
+            : <String>{},
+      );
+    } catch (_) {
+      return const GrowthState();
+    }
+  }
+
+  Future<void> saveGrowth(GrowthState g) => _store.write(
+        _growthKey,
+        jsonEncode({
+          'totalXp': g.totalXp,
+          'claimed': g.claimed.toList()..sort(),
         }),
       );
 }
