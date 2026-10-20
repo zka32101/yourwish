@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'growth.dart';
 import 'notification_prefs.dart';
 import 'storage.dart';
+import 'user_profile.dart';
 import 'streak.dart';
 
 String _fmt(DateTime d) =>
@@ -33,6 +34,7 @@ class AppRepository {
   static const _streakKey = 'streak_v1';
   static const _prefsKey = 'notif_prefs_v1';
   static const _growthKey = 'growth_v1';
+  static const _profileKey = 'profile_v1';
 
   Future<StreakState> loadStreak() async {
     try {
@@ -120,4 +122,18 @@ class AppRepository {
           'claimed': g.claimed.toList()..sort(),
         }),
       );
+
+  /// 保存されたプロフィール。未保存・壊れている場合は null。
+  Future<UserProfile?> loadProfile() async {
+    try {
+      final raw = await _store.read(_profileKey);
+      if (raw == null) return null;
+      return UserProfile.fromJson(jsonDecode(raw));
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> saveProfile(UserProfile p) =>
+      _store.write(_profileKey, jsonEncode(p.toJson()));
 }
