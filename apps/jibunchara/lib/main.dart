@@ -3,7 +3,10 @@ import 'dart:math';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
+import 'action_check_page.dart';
+import 'app_repository.dart';
 import 'stats_model.dart';
+import 'storage.dart';
 
 void main() => runApp(const JibunCharaApp());
 
@@ -23,7 +26,35 @@ class JibunCharaApp extends StatelessWidget {
           colorSchemeSeed: _pink,
           scaffoldBackgroundColor: _bg,
         ),
-        home: const StatsPrototypePage(),
+        home: const HomeShell(),
+      );
+}
+
+class HomeShell extends StatefulWidget {
+  const HomeShell({super.key});
+
+  @override
+  State<HomeShell> createState() => _HomeShellState();
+}
+
+class _HomeShellState extends State<HomeShell> {
+  final _repo = AppRepository(PrefsStore());
+  int _tab = 0;
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+        body: IndexedStack(index: _tab, children: [
+          ActionCheckPage(repository: _repo),
+          const StatsPrototypePage(),
+        ]),
+        bottomNavigationBar: NavigationBar(
+          selectedIndex: _tab,
+          onDestinationSelected: (i) => setState(() => _tab = i),
+          destinations: const [
+            NavigationDestination(icon: Icon(Icons.check_circle), label: 'きょう'),
+            NavigationDestination(icon: Icon(Icons.radar), label: 'ギャップ'),
+          ],
+        ),
       );
 }
 
