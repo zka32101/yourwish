@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'growth.dart';
 import 'storage.dart';
 import 'streak.dart';
 import 'widget_snapshot.dart';
@@ -21,9 +22,14 @@ class StoreWidgetSink implements WidgetSink {
 }
 
 /// アクション完了時・日付変更時に呼ぶ。失敗してもアプリは落とさない。
-Future<bool> syncWidget(WidgetSink sink, StreakState s, DateTime now) async {
+Future<bool> syncWidget(
+  WidgetSink sink,
+  StreakState s,
+  DateTime now, {
+  GrowthState growth = const GrowthState(),
+}) async {
   try {
-    await sink.push(jsonEncode(buildSnapshot(s, now).toMap()));
+    await sink.push(jsonEncode(buildSnapshot(s, now, growth: growth).toMap()));
     return true;
   } catch (_) {
     return false;
