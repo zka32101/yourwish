@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import 'action_check_page.dart';
 import 'app_repository.dart';
+import 'notification_settings_page.dart';
 import 'stats_model.dart';
 import 'storage.dart';
 import 'widget_sync.dart';
@@ -50,6 +51,7 @@ class _HomeShellState extends State<HomeShell> {
             widgetSink: StoreWidgetSink(PrefsStore()),
           ),
           const StatsPrototypePage(),
+          NotificationSettingsPage(repository: _repo),
         ]),
         bottomNavigationBar: NavigationBar(
           selectedIndex: _tab,
@@ -57,6 +59,8 @@ class _HomeShellState extends State<HomeShell> {
           destinations: const [
             NavigationDestination(icon: Icon(Icons.check_circle), label: 'きょう'),
             NavigationDestination(icon: Icon(Icons.radar), label: 'ギャップ'),
+            NavigationDestination(
+                icon: Icon(Icons.notifications), label: '通知'),
           ],
         ),
       );
