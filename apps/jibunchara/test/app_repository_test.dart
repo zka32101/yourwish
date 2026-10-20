@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jibunchara/app_repository.dart';
+import 'package:jibunchara/growth.dart';
 import 'package:jibunchara/notification_prefs.dart';
 import 'package:jibunchara/storage.dart';
 import 'package:jibunchara/streak.dart';
@@ -64,5 +65,25 @@ void main() {
     expect(p.tone, NotifTone.gentle);
     expect(p.restDays, {3});
     expect(p.slots, {NotifSlot.noon});
+  });
+
+  test('成長データを保存して復元できる', () async {
+    final repo = AppRepository(MemoryStore());
+    const g = GrowthState(totalXp: 120, claimed: {'2026-10-20:action'});
+    await repo.saveGrowth(g);
+    final back = await repo.loadGrowth();
+    expect(back.totalXp, 120);
+    expect(back.claimed, {'2026-10-20:action'});
+    expect(back.stage, GrowthStage.child);
+  });
+
+  test('成長データが壊れていても初期値で起動する', () async {
+    final store = MemoryStore();
+    await store.write('growth_v1', 'oops');
+    expect((await AppRepository(store).loadGrowth()).totalXp, 0);
+    await store.write('growth_v1', '{"totalXp":-5,"claimed":[1,"a"]}');
+    final g = await AppRepository(store).loadGrowth();
+    expect(g.totalXp, 0);
+    expect(g.claimed, {'a'});
   });
 }

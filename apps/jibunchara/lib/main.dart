@@ -7,6 +7,7 @@ import 'action_check_page.dart';
 import 'app_repository.dart';
 import 'stats_model.dart';
 import 'storage.dart';
+import 'widget_sync.dart';
 
 void main() => runApp(const JibunCharaApp());
 
@@ -44,7 +45,10 @@ class _HomeShellState extends State<HomeShell> {
   @override
   Widget build(BuildContext context) => Scaffold(
         body: IndexedStack(index: _tab, children: [
-          ActionCheckPage(repository: _repo),
+          ActionCheckPage(
+            repository: _repo,
+            widgetSink: StoreWidgetSink(PrefsStore()),
+          ),
           const StatsPrototypePage(),
         ]),
         bottomNavigationBar: NavigationBar(

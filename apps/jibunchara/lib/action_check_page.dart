@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
 import 'app_repository.dart';
+import 'growth.dart';
 import 'notification_picker.dart';
 import 'notification_prefs.dart';
 import 'streak.dart';
+import 'widget_sync.dart';
 
 const _pink = Color(0xFFFF8FB1);
 const _mint = Color(0xFF7FD8C3);
@@ -16,11 +18,15 @@ class ActionCheckPage extends StatefulWidget {
     this.profile = const CompanionProfile(
         name: 'ミルク', mbti: 'INFP', element: 'water'),
     this.now = DateTime.now,
+    this.widgetSink,
   });
 
   final AppRepository repository;
   final CompanionProfile profile;
   final DateTime Function() now;
+
+  /// 指定すると、記録のたびにホーム画面ウィジェット用データを更新する。
+  final WidgetSink? widgetSink;
 
   @override
   State<ActionCheckPage> createState() => _ActionCheckPageState();
@@ -28,6 +34,8 @@ class ActionCheckPage extends StatefulWidget {
 
 class _ActionCheckPageState extends State<ActionCheckPage> {
   StreakState? _streak;
+  GrowthState _growth = const GrowthState();
+  String? _evolved;
   NotifPrefs _prefs = const NotifPrefs();
 
   DateTime get _today {
@@ -44,16 +52,36 @@ class _ActionCheckPageState extends State<ActionCheckPage> {
   Future<void> _load() async {
     final s = await widget.repository.loadStreak();
     final p = await widget.repository.loadPrefs();
+    final g = await widget.repository.loadGrowth();
     if (!mounted) return;
     setState(() {
       _streak = s;
       _prefs = p;
+      _growth = g;
     });
+  }
+
+  /// 行動を完了したときだけXPを付与する（おやすみカードでは増減しない）
+  Future<void> _complete(StreakState current) async {
+    final today = _today;
+    final next = current.markCompleted(today);
+    final a = _growth.award(XpAction.action, today);
+    final b = a.state.awardBonuses(next, today);
+    setState(() {
+      _growth = b.state;
+      _evolved = (a.stageUp || b.stageUp)
+          ? stageLabels[b.state.stage]
+          : null;
+    });
+    await widget.repository.saveGrowth(b.state);
+    await _update(next);
   }
 
   Future<void> _update(StreakState next) async {
     setState(() => _streak = next);
     await widget.repository.saveStreak(next);
+    final sink = widget.widgetSink;
+    if (sink != null) await syncWidget(sink, next, widget.now());
   }
 
   @override
@@ -79,7 +107,7 @@ class _ActionCheckPageState extends State<ActionCheckPage> {
         padding: const EdgeInsets.all(16),
         children: [
           Row(children: [
-            const Text('🐱', style: TextStyle(fontSize: 48)),
+            Text(_stageEmoji(_growth.stage), style: const TextStyle(fontSize: 48)),
             const SizedBox(width: 12),
             Expanded(
               child: Container(
@@ -115,11 +143,13 @@ class _ActionCheckPageState extends State<ActionCheckPage> {
               ]),
             ),
           ),
+          const SizedBox(height: 12),
+          _GrowthCard(growth: _growth, evolvedTo: _evolved),
           const SizedBox(height: 16),
           FilledButton(
             style: FilledButton.styleFrom(
                 backgroundColor: _pink, minimumSize: const Size.fromHeight(52)),
-            onPressed: done ? null : () => _update(streak.markCompleted(today)),
+            onPressed: done ? null : () => _complete(streak),
             child: Text(done ? 'きょうは完了！' : 'できた！'),
           ),
           const SizedBox(height: 8),
@@ -132,6 +162,49 @@ class _ActionCheckPageState extends State<ActionCheckPage> {
                 : 'おやすみカードを使う（のこり ${streak.restCardsLeft(today)} 枚）'),
           ),
         ],
+      ),
+    );
+  }
+}
+
+String _stageEmoji(GrowthStage s) => switch (s) {
+      GrowthStage.egg => '🥚',
+      GrowthStage.child => '🐣',
+      GrowthStage.adult => '🐱',
+      GrowthStage.special => '🌟',
+    };
+
+class _GrowthCard extends StatelessWidget {
+  const _GrowthCard({required this.growth, this.evolvedTo});
+  final GrowthState growth;
+  final String? evolvedTo;
+
+  @override
+  Widget build(BuildContext context) {
+    final next = growth.xpToNext;
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          if (evolvedTo != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Text('✨ $evolvedTo に成長したよ！',
+                  style: Theme.of(context).textTheme.titleMedium),
+            ),
+          Text('${stageLabels[growth.stage]}  ${growth.totalXp} XP'),
+          const SizedBox(height: 6),
+          LinearProgressIndicator(
+            value: growth.progress,
+            minHeight: 10,
+            borderRadius: BorderRadius.circular(8),
+            color: _pink,
+          ),
+          const SizedBox(height: 4),
+          Text(next == null ? '最高のすがた！' : 'つぎの成長まであと $next XP'),
+        ]),
       ),
     );
   }
