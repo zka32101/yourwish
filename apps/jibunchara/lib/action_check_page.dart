@@ -4,6 +4,7 @@ import 'app_repository.dart';
 import 'notification_picker.dart';
 import 'notification_prefs.dart';
 import 'streak.dart';
+import 'widget_sync.dart';
 
 const _pink = Color(0xFFFF8FB1);
 const _mint = Color(0xFF7FD8C3);
@@ -16,11 +17,15 @@ class ActionCheckPage extends StatefulWidget {
     this.profile = const CompanionProfile(
         name: 'ミルク', mbti: 'INFP', element: 'water'),
     this.now = DateTime.now,
+    this.widgetSink,
   });
 
   final AppRepository repository;
   final CompanionProfile profile;
   final DateTime Function() now;
+
+  /// 指定すると、記録のたびにホーム画面ウィジェット用データを更新する。
+  final WidgetSink? widgetSink;
 
   @override
   State<ActionCheckPage> createState() => _ActionCheckPageState();
@@ -54,6 +59,8 @@ class _ActionCheckPageState extends State<ActionCheckPage> {
   Future<void> _update(StreakState next) async {
     setState(() => _streak = next);
     await widget.repository.saveStreak(next);
+    final sink = widget.widgetSink;
+    if (sink != null) await syncWidget(sink, next, widget.now());
   }
 
   @override
