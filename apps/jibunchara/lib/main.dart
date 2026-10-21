@@ -6,6 +6,9 @@ import 'package:flutter/material.dart';
 import 'action_check_page.dart';
 import 'app_repository.dart';
 import 'notification_settings_page.dart';
+import 'profile_page.dart';
+import 'theory_baseline.dart';
+import 'user_profile.dart';
 import 'stats_model.dart';
 import 'storage.dart';
 import 'widget_sync.dart';
@@ -42,16 +45,34 @@ class HomeShell extends StatefulWidget {
 class _HomeShellState extends State<HomeShell> {
   final _repo = AppRepository(PrefsStore());
   int _tab = 0;
+  UserProfile _profile = UserProfile.defaults;
+
+  @override
+  void initState() {
+    super.initState();
+    _repo.loadProfile().then((p) {
+      if (p != null && mounted) setState(() => _profile = p);
+    });
+  }
 
   @override
   Widget build(BuildContext context) => Scaffold(
         body: IndexedStack(index: _tab, children: [
           ActionCheckPage(
             repository: _repo,
+            profile: _profile.toCompanion(),
             widgetSink: StoreWidgetSink(PrefsStore()),
           ),
-          const StatsPrototypePage(),
-          NotificationSettingsPage(repository: _repo),
+          StatsPrototypePage(mbti: _profile.mbti),
+          NotificationSettingsPage(
+            repository: _repo,
+            profile: _profile.toCompanion(),
+          ),
+          ProfilePage(
+            repository: _repo,
+            initial: _profile,
+            onSaved: (p) => setState(() => _profile = p),
+          ),
         ]),
         bottomNavigationBar: NavigationBar(
           selectedIndex: _tab,
@@ -61,13 +82,17 @@ class _HomeShellState extends State<HomeShell> {
             NavigationDestination(icon: Icon(Icons.radar), label: 'ギャップ'),
             NavigationDestination(
                 icon: Icon(Icons.notifications), label: '通知'),
+            NavigationDestination(icon: Icon(Icons.person), label: 'プロフィール'),
           ],
         ),
       );
 }
 
 class StatsPrototypePage extends StatefulWidget {
-  const StatsPrototypePage({super.key});
+  const StatsPrototypePage({super.key, this.mbti = 'INFP'});
+
+  /// 理論基準（想定との比較）に使うタイプ
+  final String mbti;
 
   @override
   State<StatsPrototypePage> createState() => _StatsPrototypePageState();
@@ -76,9 +101,11 @@ class StatsPrototypePage extends StatefulWidget {
 class _StatsPrototypePageState extends State<StatsPrototypePage> {
   int axis = 0;
 
+  List<AxisDistribution> get _theory => theoreticalProfile(widget.mbti);
+
   @override
   Widget build(BuildContext context) {
-    final dist = pickBaseline(theoretical: demoTheory[axis]);
+    final dist = pickBaseline(theoretical: _theory[axis]);
     final pct = dist.percentile(demoCurrent[axis]);
     return Scaffold(
       appBar: AppBar(title: const Text('ギャップ分析（プロトタイプ）')),
@@ -165,7 +192,7 @@ class _StatsPrototypePageState extends State<StatsPrototypePage> {
         getTitle: (i, _) => RadarChartTitle(text: axes[i]),
         titleTextStyle: const TextStyle(fontSize: 12),
         dataSets: [
-          set([for (final d in demoTheory) d.mean], _lavender, fill: false),
+          set([for (final d in _theory) d.mean], _lavender, fill: false),
           set(demoIdeal, _mint),
           set(demoCurrent, _pink),
         ],
