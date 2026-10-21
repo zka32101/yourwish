@@ -28,6 +28,7 @@ void main() {
 
   testWidgets('「できた！」で達成・XP加算・保存される', (tester) async {
     final repo = await pumpPage(tester);
+    await tester.ensureVisible(find.text('できた！'));
     await tester.tap(find.text('できた！'));
     await tester.pumpAndSettle();
 
@@ -41,6 +42,7 @@ void main() {
 
   testWidgets('おやすみカードでは連続は続くがXPは増えない', (tester) async {
     final repo = await pumpPage(tester);
+    await tester.ensureVisible(find.textContaining('おやすみカードを使う'));
     await tester.tap(find.textContaining('おやすみカードを使う'));
     await tester.pumpAndSettle();
 
@@ -48,5 +50,18 @@ void main() {
     expect(find.text('🔥 1 日れんぞく'), findsOneWidget);
     expect(find.text('たまご  0 XP'), findsOneWidget);
     expect((await repo.loadStreak()).rested, contains(today));
+  });
+
+  testWidgets('運勢を見ると表示され、XPが1日1回だけ加算される', (tester) async {
+    final repo = await pumpPage(tester);
+    expect(find.textContaining('★'), findsNothing);
+
+    await tester.ensureVisible(find.text('今日の運勢を見る'));
+    await tester.tap(find.text('今日の運勢を見る'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('ラッキーカラー'), findsOneWidget);
+    expect(find.text('たまご  2 XP'), findsOneWidget);
+    expect((await repo.loadGrowth()).totalXp, 2);
   });
 }
