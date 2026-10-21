@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 
 import 'app_repository.dart';
+import 'fortune.dart';
 import 'growth.dart';
 import 'notification_picker.dart';
 import 'notification_prefs.dart';
 import 'streak.dart';
+import 'user_profile.dart';
 import 'widget_sync.dart';
 
 const _pink = Color(0xFFFF8FB1);
@@ -18,12 +20,16 @@ class ActionCheckPage extends StatefulWidget {
     this.profile = const CompanionProfile(
         name: 'ミルク', mbti: 'INFP', element: 'water'),
     this.now = DateTime.now,
+    this.userProfile = UserProfile.defaults,
     this.widgetSink,
   });
 
   final AppRepository repository;
   final CompanionProfile profile;
   final DateTime Function() now;
+
+  /// 運勢の算出に使うプロフィール（タイプ・星座・血液型）
+  final UserProfile userProfile;
 
   /// 指定すると、記録のたびにホーム画面ウィジェット用データを更新する。
   final WidgetSink? widgetSink;
@@ -36,6 +42,7 @@ class _ActionCheckPageState extends State<ActionCheckPage> {
   StreakState? _streak;
   GrowthState _growth = const GrowthState();
   String? _evolved;
+  bool _fortuneShown = false;
   NotifPrefs _prefs = const NotifPrefs();
 
   DateTime get _today {
@@ -75,6 +82,17 @@ class _ActionCheckPageState extends State<ActionCheckPage> {
     });
     await widget.repository.saveGrowth(b.state);
     await _update(next);
+  }
+
+  /// 運勢を見る（XPは1日1回だけ付与される）
+  Future<void> _showFortune() async {
+    final r = _growth.award(XpAction.fortune, _today);
+    setState(() {
+      _fortuneShown = true;
+      _growth = r.state;
+      if (r.stageUp) _evolved = stageLabels[r.state.stage];
+    });
+    if (r.gained > 0) await widget.repository.saveGrowth(r.state);
   }
 
   Future<void> _update(StreakState next) async {
@@ -147,6 +165,13 @@ class _ActionCheckPageState extends State<ActionCheckPage> {
           ),
           const SizedBox(height: 12),
           _GrowthCard(growth: _growth, evolvedTo: _evolved),
+          const SizedBox(height: 12),
+          _FortuneCard(
+            fortune: _fortuneShown
+                ? fortuneFor(widget.userProfile, today)
+                : null,
+            onShow: _showFortune,
+          ),
           const SizedBox(height: 16),
           FilledButton(
             style: FilledButton.styleFrom(
@@ -207,6 +232,46 @@ class _GrowthCard extends StatelessWidget {
           const SizedBox(height: 4),
           Text(next == null ? '最高のすがた！' : 'つぎの成長まであと $next XP'),
         ]),
+      ),
+    );
+  }
+}
+
+class _FortuneCard extends StatelessWidget {
+  const _FortuneCard({required this.fortune, required this.onShow});
+  final Fortune? fortune;
+  final VoidCallback onShow;
+
+  @override
+  Widget build(BuildContext context) {
+    final f = fortune;
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: f == null
+            ? Center(
+                child: TextButton(
+                    onPressed: onShow, child: const Text('今日の運勢を見る')),
+              )
+            : Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text('${'★' * f.stars}${'☆' * (5 - f.stars)}',
+                    style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(height: 4),
+                Text(f.message),
+                if (f.traitLine.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(f.traitLine),
+                ],
+                const SizedBox(height: 8),
+                Text('ラッキーカラー: ${f.luckyColor}　ラッキーアイテム: ${f.luckyItem}'),
+                const SizedBox(height: 4),
+                Text('ひとこと: ${f.advice}'),
+                const SizedBox(height: 8),
+                Text('占いは楽しむためのものです。気楽に受け取ってね。',
+                    style: Theme.of(context).textTheme.bodySmall),
+              ]),
       ),
     );
   }

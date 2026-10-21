@@ -61,6 +61,7 @@ class _HomeShellState extends State<HomeShell> {
           ActionCheckPage(
             repository: _repo,
             profile: _profile.toCompanion(),
+            userProfile: _profile,
             widgetSink: StoreWidgetSink(PrefsStore()),
           ),
           StatsPrototypePage(mbti: _profile.mbti),
